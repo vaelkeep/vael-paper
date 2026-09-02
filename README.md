@@ -13,7 +13,7 @@ around wherever you were reading.*
 ![Python 3.11+](https://img.shields.io/badge/python-3.11+-3776AB?logo=python&logoColor=white)
 ![Node 20+](https://img.shields.io/badge/node-20+-339933?logo=nodedotjs&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/typescript-strict-3178C6?logo=typescript&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-83%20passing-success)
+[![CI](https://github.com/vaelkeep/vael-paper/actions/workflows/ci.yml/badge.svg)](https://github.com/vaelkeep/vael-paper/actions/workflows/ci.yml)
 ![Status](https://img.shields.io/badge/status-working%20prototype-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-informational)](LICENSE)
 
@@ -251,13 +251,23 @@ untrusted input is the normal case rather than the exception:
 ## 🛠 Development
 
 ```bash
+# reader — pagination engine, markdown parser, typography
 cd reader
-npm run dev        # reader on :5174 with hot reload, proxying the API
-npm test           # 83 tests — packer, geometry, markdown, drop caps
+npm run dev        # :5174 with hot reload, proxying the API
+npm test           # packer, geometry, markdown parser, drop-cap solver
 npm run typecheck
+
+# server — scanner and API
+cd server
+uv run vael-paper  # :8791
+uv run pytest      # frontmatter tolerance, URL safety, the four endpoints
 ```
 
-Run the API alongside it with `cd server && uv run vael-paper`.
+Both suites are pure and fast — no browser, no network, under two seconds
+together. [CI](.github/workflows/ci.yml) runs them on every push, plus a job
+that re-scans the sample edition, because it is both the test fixture and the
+worked example in the format guide: if it stops scanning, the documentation is
+wrong even when the code is right.
 
 The engine's rules are not obvious from the code alone. **Read
 [`docs/PAGINATION.md`](docs/PAGINATION.md) before changing anything under

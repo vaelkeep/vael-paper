@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# A second push to the same branch cancels the first: nothing here is worth
+# finishing once it is already out of date.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  reader:
+    name: Reader
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: reader
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: reader/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  server:
+    name: Server
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: server/uv.lock
+
+      - name: Install
+        run: uv sync --locked
+
+      - name: Test
+        run: uv run pytest
+
+  edition:
+    name: Sample edition
+    runs-on: ubuntu-latest
+
+    # The sample edition is the fixture every other test leans on, and it is
+    # also the worked example in the format guide. If it stops scanning, the
+    # documentation is wrong even when the code is right.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: server/uv.lock
+
+      - name: Install
+        working-directory: server
+        run: uv sync --locked
+
+      - name: The sample edition still scans
+        working-directory: server
+        run: |
+          uv run python - <<'PY'
+          from pathlib import Path
+          from vael_paper.scan import scan_edition
+
+          edition = scan_edition(Path("../editions/2026-09-02"))
+          codes = [w.code for w in edition.warnings]
+          print(f"{len(edition.articles)} articles, {len(edition.images)} images, warnings={codes}")
+
+          assert edition.articles, "no articles scanned"
+          assert all(i.w and i.h for i in edition.images.values()), "an image lost its dimensions"
+
+          # 08-broken.md exists to produce exactly this and nothing else. A new
+          # warning means real content regressed; none at all means the file
+          # that proves the tolerant path stopped being broken.
+          assert codes == ["yaml_parse"], f"unexpected warnings: {codes}"
+          PY

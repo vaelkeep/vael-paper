@@ -15,6 +15,13 @@ dependencies = [
 [project.scripts]
 vael-paper = "vael_paper.__main__:main"
 
+[dependency-groups]
+dev = ["pytest>=8.0", "httpx2>=0.1"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
