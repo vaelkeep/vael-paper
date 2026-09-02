@@ -171,18 +171,7 @@ Ollama `11434`, Obsidian's REST plugin `27124`, Docker Desktop
 
 ## 🏗️ Architecture
 
-```
-                nightly generator (out of scope)
-                        │ writes
-                        ▼
-        editions/YYYY-MM-DD/{edition.json, articles/, images/}
-                        │ scanned
-                        ▼
-        server/  FastAPI on :8791 — scan, parse, probe images
-                        │ fetch
-                        ▼
-        reader/  Vite + vanilla TS — measure → pack → render → turn
-```
+![Four stages: a nightly generator writes an edition directory, the FastAPI server scans it, and the TypeScript reader fetches it and measures, packs, renders and turns](docs/architecture.png)
 
 ```
 vael-paper/
