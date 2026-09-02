@@ -271,6 +271,11 @@ A GitHub-style pipe table, recognised by its delimiter row, which also carries
 the column alignment:
 
 ```markdown
+A table longer than the room left in a column continues in the next one, split
+between rows, and the heading row is set again at the top of the continuation
+so the figures never lose their names. The label above the table is not
+repeated.
+
 ### Equities
 
 | Index | Close | Change | % |

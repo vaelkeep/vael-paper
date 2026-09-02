@@ -151,6 +151,12 @@ export interface BlockMetrics {
    * separated from the story it belongs to.
    */
   keepWithPrevious: boolean;
+  /**
+   * For a table with a heading row: how many baselines the heading occupies
+   * and the line index at which the body rows begin (after any label). A
+   * continuation that starts at or past `bodyStart` repeats the heading.
+   */
+  head?: { lines: number; bodyStart: number };
 }
 
 /**
@@ -221,6 +227,8 @@ export interface SliceRef {
   heightLines: number;
   isArticleStart: boolean;
   isArticleEnd: boolean;
+  /** Baselines of repeated table heading drawn above the slice's first line. */
+  headLines?: number;
 }
 
 export interface ColumnFill {

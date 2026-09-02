@@ -78,9 +78,26 @@ function sliceNode(
   // so it must not be painted either. This pairing is what keeps slices from
   // drifting by one lead per column.
   if (isFirstInColumn || slice.fromLine > 0) ribbon.classList.add('slice-head');
-  ribbon.style.setProperty('--slice-offset', `${-slice.fromLine * lh}px`);
-
   const source = template.content.firstElementChild!;
+
+  // A table continued from the previous column gets its heading row again,
+  // drawn over the top of the window while the rows sit below it. The packer
+  // charged for these lines, so the slice's height already includes them.
+  const headLines = slice.headLines ?? 0;
+  if (headLines > 0) {
+    const block = source.children[slice.fromBlock];
+    const table = block?.querySelector('table');
+    if (table) {
+      const repeat = table.cloneNode(true) as HTMLElement;
+      repeat.querySelector('tbody')?.remove();
+      const head = h('div', 'slice__head');
+      head.style.height = `${headLines * lh}px`;
+      head.append(repeat);
+      window_.append(head);
+    }
+  }
+  ribbon.style.setProperty('--slice-offset', `${(headLines - slice.fromLine) * lh}px`);
+
   const lastBlock = slice.toLine > 0 ? slice.toBlock : slice.toBlock - 1;
   for (let i = slice.fromBlock; i <= lastBlock; i++) {
     const node = source.children[i];

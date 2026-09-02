@@ -21,6 +21,7 @@ function ledger(specs: Spec[], articleId = 'a'): LineLedger {
     atomic: s.atomic ?? false,
     keepWithNext: s.keepWithNext ?? false,
     keepWithPrevious: s.keepWithPrevious ?? false,
+    ...(s.head ? { head: s.head } : {}),
   }));
   return {
     key: {
@@ -293,5 +294,52 @@ describe('the oversized-block escape hatch', () => {
       columnIsEmpty: false,
     });
     expect(r.usedLines).toBeLessThanOrEqual(10 - 1);
+  });
+});
+
+
+describe('tables that continue repeat their heading', () => {
+  // A label line, a heading line, then ten rows: rows begin at line 2.
+  const table = { kind: 'table' as const, lines: 12, head: { lines: 1, bodyStart: 2 } };
+
+  it('charges the repeated heading to the continuation and marks the slice', () => {
+    const led = ledger([{ lines: 3 }, table]);
+    const first = packColumn(8, cursorAt('a'), led);
+    // 3 lines of paragraph, 1 lead, then 4 lines of table (label, heading, 2 rows).
+    expect(first.usedLines).toBe(8);
+    expect(first.cursor).toEqual({ articleId: 'a', blockIndex: 1, lineIndex: 4 });
+    expect(first.slice?.headLines).toBeUndefined();
+
+    const second = packColumn(6, first.cursor, led);
+    // One line for the heading again, five rows.
+    expect(second.slice?.headLines).toBe(1);
+    expect(second.slice?.fromLine).toBe(4);
+    expect(second.usedLines).toBe(6);
+    expect(second.cursor.lineIndex).toBe(9);
+  });
+
+  it('does not repeat the heading when the split falls before the rows', () => {
+    const led = ledger([table]);
+    // Only the label fits; the heading itself opens the next column.
+    const first = packColumn(1, cursorAt('a'), led);
+    expect(first.cursor.lineIndex).toBe(1);
+    const second = packColumn(20, first.cursor, led);
+    expect(second.slice?.headLines).toBeUndefined();
+    expect(second.usedLines).toBe(11);
+  });
+
+  it('the whole table still adds up across columns', () => {
+    const led = ledger([table]);
+    let cursor = cursorAt('a');
+    let rows = 0;
+    let headings = 0;
+    while (!atEnd(cursor, led)) {
+      const r = packColumn(5, cursor, led);
+      headings += r.slice?.headLines ?? 0;
+      rows += r.usedLines - (r.slice?.headLines ?? 0);
+      cursor = r.cursor;
+    }
+    expect(rows).toBe(12);
+    expect(headings).toBeGreaterThan(0);
   });
 });

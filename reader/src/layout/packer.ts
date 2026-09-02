@@ -104,6 +104,10 @@ export function packColumn(
   const canOverrun = options.columnIsEmpty !== false;
 
   const from = { blockIndex: cursor.blockIndex, lineIndex: cursor.lineIndex };
+  // A slice that opens inside a table's rows repeats the heading above them.
+  const first = blocks[from.blockIndex];
+  const headLines =
+    first?.head && !first.atomic && from.lineIndex >= first.head.bodyStart ? first.head.lines : 0;
 
   while (cursor.blockIndex < blocks.length) {
     const block = blocks[cursor.blockIndex]!;
@@ -138,8 +142,10 @@ export function packColumn(
     // ---- entering a fresh region at a different measure: block boundary only
     if (options.blockBreakOnly && cursor.lineIndex !== 0) break;
 
+    // Entering a table among its rows costs the repeated heading first.
+    const entering = cursor.blockIndex === from.blockIndex ? headLines : 0;
     const availableInBlock = block.lines - cursor.lineIndex;
-    let take = Math.min(availableInBlock, Math.max(0, remaining - lead));
+    let take = Math.min(availableInBlock, Math.max(0, remaining - lead - entering));
     let rest = availableInBlock - take;
 
     if (take > 0 && rest > 0 && take < ORPHAN_MIN) {
@@ -155,7 +161,7 @@ export function packColumn(
       if (canOverrun && emitted === 0 && availableInBlock > budget) {
         // A single paragraph taller than the column. Take what fits rather
         // than stalling; the continuation picks up from the exact line.
-        take = Math.max(1, budget - lead);
+        take = Math.max(1, budget - lead - entering);
       } else {
         break;
       }
@@ -165,7 +171,7 @@ export function packColumn(
     if (block.keepWithNext && take === availableInBlock) {
       const next = blocks[cursor.blockIndex + 1];
       const need = next ? next.leadLines + Math.min(next.lines, ORPHAN_MIN) : 0;
-      if (used + lead + take + need > budget && emitted > 0) break;
+      if (used + lead + entering + take + need > budget && emitted > 0) break;
     }
 
     // ---- keep-with-previous: a credit line must not begin a column alone.
@@ -180,12 +186,12 @@ export function packColumn(
       !options.blockBreakOnly
     ) {
       const need = following.leadLines + following.lines;
-      const fitsHere = used + lead + take + need <= budget;
+      const fitsHere = used + lead + entering + take + need <= budget;
       const fitsAlone = block.lines + need <= budget;
       if (!fitsHere && fitsAlone) break;
     }
 
-    used += lead + take;
+    used += lead + entering + take;
     emitted += 1;
 
     const consumed = cursor.lineIndex + take;
@@ -212,6 +218,7 @@ export function packColumn(
     heightLines: used,
     isArticleStart: from.blockIndex === 0 && from.lineIndex === 0,
     isArticleEnd: finished,
+    ...(headLines > 0 ? { headLines } : {}),
   };
 
   return { cursor, slice, usedLines: used, finished, overflowed };

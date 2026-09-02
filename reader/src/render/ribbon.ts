@@ -85,7 +85,11 @@ function buildFigure(block: Extract<Block, { kind: 'figure' }>, o: RibbonOptions
   img.width = asset.w;
   img.height = asset.h;
   img.alt = block.caption ?? '';
-  img.loading = 'lazy';
+  // Eager on purpose. A page must be complete before it is turned to, and a
+  // lazy image in a surface prepared off-screen is fetched only once the turn
+  // has finished — a plate that pops in a beat after the page. In a hidden tab
+  // a lazy image is never fetched at all. An edition has a handful of images.
+  img.loading = 'eager';
   img.decoding = 'async';
   frame.append(img);
   fig.append(frame);
@@ -116,6 +120,9 @@ function buildTable(block: Extract<Block, { kind: 'table' }>): HTMLElement {
   const wrap = el('div', 'table-block');
 
   if (block.label) wrap.append(el('p', 'table-block__label', block.label));
+  // A table split across columns repeats its heading row at the top of the
+  // continuation; the ledger measures where the rows begin (see measure.ts).
+  if (block.head.length > 0) wrap.dataset.repeatHead = '1';
 
   const table = el('table', 'agate') as HTMLTableElement;
 

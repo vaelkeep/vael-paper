@@ -38,6 +38,7 @@ the scanner knows it, a `file` and 1-based `line`.
 | `unsafe_source` | Only `http`/`https` URLs are printed. Drop or fix the link. |
 | `dangling_article`, `unlisted_articles` | Only with an `edition.json`. Usually simplest to delete the manifest and let `paper.json` order the paper. |
 | `table_wide`, `cell_long` | Drop a column, shorten the longest cells, fold the day into the time. |
+| `cell_truncated` | You cut the cell yourself with `…`. Don't: shorten it in words (drop a `Appointment:` prefix, abbreviate a name) and let the column do any cutting. |
 | `plate_aspect` | Add `focus: top`/`center`/`bottom`, or use a landscape image. |
 | `story_short` | Fold it into another story, or write the rest. |
 | `story_long` | Split it. |

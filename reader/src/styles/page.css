@@ -113,6 +113,21 @@
   width: 100%;
 }
 
+/* A table's heading, repeated where the table continues. Opaque, because the
+   rows already shown in the previous column sit behind it in the ribbon. */
+.slice__head {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: var(--paper);
+  z-index: 1;
+}
+
+.slice__head .agate {
+  margin: 0;
+}
+
 /* ------------------------------------------------------------------ chrome */
 
 .toolbar {

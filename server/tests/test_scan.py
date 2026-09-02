@@ -447,3 +447,10 @@ def test_the_demo_edition_is_clean_and_the_fixture_keeps_its_one_mark() -> None:
     assert demo.warnings == [] and demo.lint == [], (demo.warnings, demo.lint)
     fixture = scan_edition(SAMPLE)
     assert [w.code for w in fixture.warnings] == ["yaml_parse"]
+
+
+def test_lint_notices_cells_the_generator_already_cut(tmp_path: Path) -> None:
+    body = ("w " * 70) + "\n\n| When | What |\n|---|---|\n| Thu 1:15 | Appointment: Visit wi… |\n"
+    _write(tmp_path / "2026-01-02", "01-a.md", "---\nheadline: A\n---\n" + body)
+    codes = [w.code for w in scan_edition(tmp_path / "2026-01-02").lint]
+    assert "cell_truncated" in codes

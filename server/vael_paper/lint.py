@@ -114,6 +114,17 @@ def lint_article(article: Article) -> list[Warning_]:
         longest = max((c for r in rows for c in r), key=len, default="")
         if len(longest) > CELL_MAX_CH:
             note("cell_long", f"Cell {longest[:30]!r} is {len(longest)} characters; over {CELL_MAX_CH} it will be cut with an ellipsis.", line)
+        # A generator that trims cells itself does the paper's job badly: the
+        # cut lands at a fixed count rather than at the column, and the reader
+        # then cuts a second time. Shorten the words instead.
+        cut = next((c for r in rows for c in r if c.endswith(("…", "..."))), None)
+        if cut is not None:
+            note(
+                "cell_truncated",
+                f"Cell {cut[:30]!r} was cut with an ellipsis before it reached the paper; "
+                "shorten it in words (drop a prefix, abbreviate) and let the column do any cutting.",
+                line,
+            )
 
     return out
 

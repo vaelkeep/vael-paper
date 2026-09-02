@@ -88,6 +88,22 @@ export function readLedger(
       : Math.max(1, toLines(height, lh));
     prevBottom = top + height;
 
+    // A table's heading row repeats when the table continues in another
+    // column. Read where it ends so the packer can charge for the repeat and
+    // the renderer can know whether a slice starts among the rows.
+    let head: { lines: number; bodyStart: number } | undefined;
+    if (el.hasAttribute('data-repeat-head')) {
+      const thead = el.querySelector('thead');
+      if (thead) {
+        const blockTop = el.getBoundingClientRect().top;
+        const rect = thead.getBoundingClientRect();
+        head = {
+          lines: Math.max(1, toLines(rect.height, lh)),
+          bodyStart: Math.max(1, toLines(rect.bottom - blockTop, lh)),
+        };
+      }
+    }
+
     blocks.push({
       index: i,
       kind: article.blocks[i]?.kind ?? 'para',
@@ -96,6 +112,7 @@ export function readLedger(
       atomic,
       keepWithNext: el.hasAttribute('data-keep-with-next'),
       keepWithPrevious: el.hasAttribute('data-keep-with-previous'),
+      ...(head ? { head } : {}),
     });
     total += lines + lead;
   });

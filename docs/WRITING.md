@@ -83,6 +83,8 @@ wide. So:
 - the longest cell in any column under twenty-six characters;
 - put the day into the time (`Thu 9:30`) rather than in its own column;
 - a `### Label` line directly above a table becomes its title.
+- never cut a cell yourself with `…`; shorten it in words. The column
+  cuts what does not fit, and two cuts read worse than one.
 
 Numbers, times and prices are set in tabular figures; `−` for a decline is
 set apart from the rest of the row.
