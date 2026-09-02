@@ -8,8 +8,8 @@ extend to the third-party works redistributed here, which remain under their own
 terms:
 
 
-Fonts — reader/src/fonts/
--------------------------
+Fonts — reader/src/fonts/ and server/vael_paper/fonts/
+-------------------------------------------------------
 
 Source Serif 4
     Copyright 2014-2023 Adobe (https://adobe.com/), with Reserved Font Name

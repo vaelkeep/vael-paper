@@ -98,12 +98,33 @@ you to find pixels.
 chart:
   kind: bars               # or line
   values: [9120, 8340, 10205, 2860, 8015, 11480, 8470]
+  labels: [Thu, Fri, Sat, Sun, Mon, Tue, Wed]
+  show_values: true
   target: 8000             # optional reference line
 caption: Daily steps, last seven days. The dotted line is the target of eight thousand.
 ```
 
 The paper draws it in its own style. Two to about forty values for a line,
 two to twelve for bars. Put the reading in the caption.
+
+**Adding labels.** `labels:` is a list of short strings set under the axis.
+
+- Give one label per value and each sits under its own bar or point:
+  `labels: [Thu, Fri, Sat, Sun, Mon, Tue, Wed]` for seven values.
+- Give fewer and they are spread evenly from the first value to the last:
+  `labels: [6am, 9, noon, 3pm, 6, 9, 12]` over thirty-seven half-hourly
+  readings puts one every three hours. Use this for a line with many points.
+- Keep them short: twelve characters at most, and a label must fit in the
+  space between labels. "Midnight" over seven labels is too wide; "12" is
+  fine. If the check says a label is too wide, shorten it or use fewer.
+- Numbers on the bars: add `show_values: true`. On a line chart only the
+  first, last and highest values are shown, so the figures never crowd the
+  curve.
+- Values all close together (daily highs of 94 to 99) look identical from
+  zero; set `min: 80` and the differences show.
+
+Label the axis whenever the reader would otherwise have to guess which bar
+is which. Show the values when the numbers themselves matter.
 
 **A photograph** from the pictures you were given: `image: images/name.png`
 plus `focus: top`, `center` or `bottom` to say which part to keep when it is

@@ -9,6 +9,8 @@ span: 1col
 chart:
   kind: bars
   values: [9120, 8340, 10205, 2860, 8015, 11480, 8470]
+  labels: [Thu, Fri, Sat, Sun, Mon, Tue, Wed]
+  show_values: true
   target: 8000
   max: 12500
 caption: Daily steps, last seven days. The dotted line is your own target of eight thousand.

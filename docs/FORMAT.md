@@ -177,18 +177,39 @@ caption, where a newspaper puts it anyway.
 chart:
   kind: bars              # line | bars
   values: [9120, 8340, 10205, 2860, 8015, 11480, 8470]
+  labels: [Thu, Fri, Sat, Sun, Mon, Tue, Wed]   # optional: under the axis
+  show_values: true       # optional: the figure above each bar (a line: its ends and peak)
   target: 8000            # optional: a reference line; bars at or above it are filled
+  min: 0                  # optional: bottom of the scale — start highs of 94–99 at 80, not 0
   max: 12500              # optional: top of the scale (default: a little above the peak)
   aspect: 4:3             # optional: 16:9 (default for line), 3:2, 4:3 (default for bars)
-  tick_every: 3           # optional: a heavier tick every n values, for a line
+  tick_every: 3           # optional: a heavier tick every n values, for an unlabelled line
 caption: Daily steps, last seven days. The dotted line is your own target of eight thousand.
 ```
 
+Lettering is set in the paper's own face at agate size, so a plate matches
+the page.
+
+**Labels.** `labels` is a list of short strings drawn under the axis in
+letterspaced capitals. With exactly one label per value, each sits under its
+own bar or point. With fewer, they are spread evenly from the first value to
+the last, which is the right shape for a line with many points: seven labels
+over thirty-seven half-hourly readings puts one every three hours. Each label
+is twelve characters at most, there are forty at most, and a label must fit
+in the space between labels — the renderer refuses one that would collide
+with its neighbour (`bad_chart`, with the offending label named) rather than
+draw a plate nobody can read. `show_values: true` adds the figure above each
+bar; on a line, only the first, last and peak values, so the figures do not
+fight the curve. There are no y-axis figures; `min`, `max`, the `target` and
+`show_values` between them say what the scale is, and the caption says what
+it means.
+
 A line chart fills the area beneath it and, when there is a `target`, rules a
-vertical at the first value to reach it. The plate is redrawn only when the
-numbers change; the spec's hash is kept inside the PNG. An unusable spec is a
-printer's mark, `bad_chart`, and the story prints without a picture. An
-explicit `image:` always wins over a chart.
+vertical at the first value to reach it. Bars rise from the axis, which sits
+at `min`. The plate is redrawn only when the spec changes; its hash is kept
+inside the PNG. An unusable spec is a printer's mark, `bad_chart`, and the
+story prints without a picture. An explicit `image:` always wins over a
+chart.
 
 ### Sources
 

@@ -34,7 +34,7 @@ the scanner knows it, a `file` and 1-based `line`.
 | `no_headline` | Add `headline:` or start the body with `# Headline`. |
 | `unknown_section` | Use an id from `editions/paper.json`. |
 | `missing_image`, `bad_image` | Remove the `image:` line or point it at a file that exists in `images/`. |
-| `bad_chart` | `values` needs at least two numbers; `kind` is `line` or `bars`. |
+| `bad_chart` | `values` needs at least two numbers; `kind` is `line` or `bars`; `labels` are short strings; `min` is below `max`. The message says which. |
 | `unsafe_source` | Only `http`/`https` URLs are printed. Drop or fix the link. |
 | `dangling_article`, `unlisted_articles` | Only with an `edition.json`. Usually simplest to delete the manifest and let `paper.json` order the paper. |
 | `table_wide`, `cell_long` | Drop a column, shorten the longest cells, fold the day into the time. |
