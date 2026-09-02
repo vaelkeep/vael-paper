@@ -80,7 +80,10 @@ export class FlipController {
     const next = this.host.surfaceFor(clamped);
     if (!next) return;
 
-    if (!animate || !this.current) {
+    // A hidden document does not advance animations, so its `finished`
+    // promises never resolve. Cut instead of tweening; the reader will see the
+    // new spread the moment the tab is foregrounded.
+    if (!animate || !this.current || document.hidden) {
       this.stage.replaceChildren(next);
       this.current = next;
       this.index = clamped;
@@ -127,23 +130,36 @@ export class FlipController {
       { duration: DURATION, easing: EASING, fill: 'forwards' },
     );
 
+    // Completing the turn is idempotent and reachable two ways: the animations
+    // finishing, or a watchdog firing because they never did. The second path
+    // is not theoretical — a tab sent to the background mid-turn stops
+    // advancing its animations, `finished` never resolves, and without this
+    // the controller would stay `flipping` for ever and every later turn
+    // would be silently refused.
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      window.clearTimeout(watchdog);
+      outAnim.cancel();
+      inAnim.cancel();
+      outgoing.remove();
+      next.style.transform = '';
+      for (const el of [outgoing, next]) el.style.willChange = '';
+      this.current = next;
+      this.index = target;
+      this.flipping = false;
+      this.host.onChange(target);
+
+      const deferred = this.pendingRelayout;
+      this.pendingRelayout = null;
+      deferred?.();
+    };
+    const watchdog = window.setTimeout(finish, DURATION + 150);
+
     void Promise.all([outAnim.finished, inAnim.finished])
       .catch(() => undefined)
-      .then(() => {
-        outAnim.cancel();
-        inAnim.cancel();
-        outgoing.remove();
-        next.style.transform = '';
-        for (const el of [outgoing, next]) el.style.willChange = '';
-        this.current = next;
-        this.index = target;
-        this.flipping = false;
-        this.host.onChange(target);
-
-        const deferred = this.pendingRelayout;
-        this.pendingRelayout = null;
-        deferred?.();
-      });
+      .then(finish);
   }
 
   /** The gutter shadow is a compositor-only gradient, never a box-shadow. */
