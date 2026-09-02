@@ -6,7 +6,12 @@ section: today
 byline: The Vael Desk
 priority: 1
 span: full
-image: images/rain-by-hour.png
+chart:
+  kind: line
+  values: [6, 6, 7, 7, 8, 8, 9, 9, 9, 10, 10, 10, 10, 10, 11, 11, 12, 14, 16, 20, 26, 35, 45, 56, 66, 74, 79, 83, 85, 86, 83, 79, 75, 71, 67, 63, 60]
+  target: 50
+  max: 100
+  tick_every: 6
 caption: Chance of rain by hour, from the overnight forecast. The line crosses even odds a little after five.
 ---
 

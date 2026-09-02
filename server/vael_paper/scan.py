@@ -25,6 +25,7 @@ from PIL import Image, ImageStat
 from urllib.parse import urlparse
 
 from .lint import lint_edition
+from .plates import ChartError, ensure_plate, normalise_spec
 from .models import (
     Article,
     Edition,
@@ -429,6 +430,20 @@ def scan_article(path: Path, edition_id: str, ctx: _Ctx) -> Article | None:
     image_key = _as_text(fm.get("image"))
     if image_key:
         image_key = image_key.lstrip("./")
+
+    # A chart block is an image the generator described rather than drew.
+    if fm.get("chart") is not None and not image_key:
+        try:
+            spec = normalise_spec(fm["chart"])
+            image_key = f"images/{article_id}-chart.png"
+            if ensure_plate(spec, path.parent.parent / image_key):
+                log.info("drew plate %s for %s", image_key, path.name)
+        except ChartError as exc:
+            ctx.warn(scope, "bad_chart", f"chart could not be drawn: {exc}", file=path.name)
+            image_key = None
+        except OSError as exc:
+            ctx.warn(scope, "bad_chart", f"chart could not be written: {exc}", file=path.name)
+            image_key = None
 
     focus = str(fm.get("focus", "center")).strip().lower()
     if focus not in VALID_FOCUS:

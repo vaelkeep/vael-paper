@@ -165,6 +165,31 @@ multiplied into the page so the paper shows through the highlights. The contrast
 lift matters: a typical photograph is mid-tone heavy, and multiplying that
 against a cream ground without it produces mud.
 
+### Plates from data
+
+A generator cannot make a picture, but it can write down seven numbers. Give
+an article a `chart:` block instead of an `image:` and the server draws the
+plate in the paper's style — ink on cream, no lettering — and files it under
+`images/` as if you had supplied it. The reading of the chart goes in the
+caption, where a newspaper puts it anyway.
+
+```yaml
+chart:
+  kind: bars              # line | bars
+  values: [9120, 8340, 10205, 2860, 8015, 11480, 8470]
+  target: 8000            # optional: a reference line; bars at or above it are filled
+  max: 12500              # optional: top of the scale (default: a little above the peak)
+  aspect: 4:3             # optional: 16:9 (default for line), 3:2, 4:3 (default for bars)
+  tick_every: 3           # optional: a heavier tick every n values, for a line
+caption: Daily steps, last seven days. The dotted line is your own target of eight thousand.
+```
+
+A line chart fills the area beneath it and, when there is a `target`, rules a
+vertical at the first value to reach it. The plate is redrawn only when the
+numbers change; the spec's hash is kept inside the PNG. An unusable spec is a
+printer's mark, `bad_chart`, and the story prints without a picture. An
+explicit `image:` always wins over a chart.
+
 ### Sources
 
 A paper of machine-written summaries owes its reader the provenance of each one,

@@ -235,6 +235,20 @@ generator can fix its own work in a second pass. The same report is served at
 `/api/editions/<date>/check`. **Full specification:
 [`docs/FORMAT.md`](docs/FORMAT.md).**
 
+### Having a model write it
+
+- [`docs/WRITING.md`](docs/WRITING.md) — the author's guide, written to be
+  handed to a model as instructions: fields, lengths, tables, pictures, voice.
+- [`docs/GENERATING.md`](docs/GENERATING.md) — how to assemble a paper every
+  night with a modest local model: desks, the write → check → fix loop, what
+  to feed it, what to keep out of its hands.
+- [`skills/`](skills/) — `write-edition` and `check-edition`, for a coding
+  agent that takes a `SKILL.md`.
+
+A story that carries `chart: {kind: bars, values: [...]}` instead of an image
+gets its plate drawn by the server in the paper's style — a model writes the
+numbers, the paper draws the picture.
+
 ## ⚙️ Configuration
 
 | Variable | Description | Default |

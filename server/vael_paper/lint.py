@@ -143,7 +143,9 @@ def lint_edition(edition: Edition) -> list[Warning_]:
                 )
             )
 
-    if edition.articles and not any(a.priority <= 2 for a in edition.articles):
+    # One story is the lead whatever its priority; the rule is for a paper
+    # that has several and forgot to say which.
+    if len(edition.articles) >= 2 and not any(a.priority <= 2 for a in edition.articles):
         out.append(
             Warning_(
                 scope="edition",
