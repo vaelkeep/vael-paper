@@ -16,6 +16,7 @@ import json
 import logging
 import re
 from dataclasses import dataclass, field
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +24,7 @@ import yaml
 from PIL import Image, ImageStat
 from urllib.parse import urlparse
 
+from .lint import lint_edition
 from .models import (
     Article,
     Edition,
@@ -48,8 +50,18 @@ class _Ctx:
 
     warnings: list[Warning_] = field(default_factory=list)
 
-    def warn(self, scope: str, code: str, message: str) -> None:
-        self.warnings.append(Warning_(scope=scope, code=code, message=message))
+    def warn(
+        self,
+        scope: str,
+        code: str,
+        message: str,
+        *,
+        file: str | None = None,
+        line: int | None = None,
+    ) -> None:
+        self.warnings.append(
+            Warning_(scope=scope, code=code, message=message, file=file, line=line)
+        )
         log.debug("scan warning [%s/%s] %s", scope, code, message)
 
 
@@ -85,28 +97,145 @@ def _scrape_scalars(raw: str) -> dict[str, Any]:
     return out
 
 
-def parse_frontmatter(raw: str, scope: str, ctx: _Ctx) -> dict[str, Any]:
+# The names a model might reasonably reach for, mapped to the ones the format
+# uses. A generator that writes `title:` or `author:` has not made a mistake.
+KEY_ALIASES = {
+    "title": "headline",
+    "head": "headline",
+    "heading": "headline",
+    "subhead": "deck",
+    "subheading": "deck",
+    "subtitle": "deck",
+    "standfirst": "deck",
+    "summary": "deck",
+    "dek": "deck",
+    "author": "byline",
+    "by": "byline",
+    "writer": "byline",
+    "photo": "image",
+    "img": "image",
+    "picture": "image",
+    "figure": "image",
+    "alt": "caption",
+    "cutline": "caption",
+    "link": "sources",
+    "links": "sources",
+    "source": "sources",
+    "references": "sources",
+    "refs": "sources",
+    "rank": "priority",
+    "importance": "priority",
+    "prio": "priority",
+    "crop": "focus",
+    "anchor": "focus",
+    "category": "section",
+    "desk": "section",
+}
+
+PLAIN_KV_RE = re.compile(r"^([A-Za-z_][\w-]*)[ \t]*:[ \t]+(.+?)[ \t]*$")
+
+
+def _needs_quotes(value: str) -> bool:
+    """Would YAML misread this plain scalar the way a headline is often written?"""
+    if value[0] in "\"'[{|>":
+        return False  # already quoted, or deliberately structured
+    if value[0] in "*&!%@`":
+        return True  # indicators a title may legitimately begin with
+    return ": " in value or value.endswith(":") or " #" in value
+
+
+def quote_risky_scalars(raw: str) -> str:
+    """Quote the top-level values YAML would otherwise trip over.
+
+    `headline: Markets: A Cautious Session` is the single most common way a
+    model breaks frontmatter, and it is not a mistake in any language but
+    YAML's. Only whole-line ``key: value`` pairs at the top level are touched;
+    lists, nested mappings and anything already quoted pass through unchanged.
+    """
+    out = []
+    for line in raw.splitlines():
+        m = PLAIN_KV_RE.match(line)
+        if m and _needs_quotes(m.group(2)):
+            key, value = m.groups()
+            escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+            line = f'{key}: "{escaped}"'
+        out.append(line)
+    return "\n".join(out)
+
+
+def normalise_keys(data: dict[str, Any]) -> dict[str, Any]:
+    """Lower-case the keys and fold the aliases. The first spelling wins."""
+    out: dict[str, Any] = {}
+    for key, value in data.items():
+        name = str(key).strip().lower().replace("-", "_")
+        name = KEY_ALIASES.get(name, name)
+        out.setdefault(name, value)
+    return out
+
+
+def parse_frontmatter(
+    raw: str, scope: str, ctx: _Ctx, *, file: str | None = None
+) -> dict[str, Any]:
     if not raw.strip():
-        ctx.warn(scope, "no_frontmatter", "Article has no YAML frontmatter block.")
         return {}
     try:
-        data = yaml.safe_load(raw)
+        data = yaml.safe_load(quote_risky_scalars(raw))
     except yaml.YAMLError as exc:
         detail = str(exc).splitlines()[0] if str(exc) else exc.__class__.__name__
-        recovered = _scrape_scalars(raw)
+        mark = getattr(exc, "problem_mark", None)
+        # The frontmatter starts on line 2 of the file, after the opening fence.
+        line = mark.line + 2 if mark is not None else None
+        recovered = normalise_keys(_scrape_scalars(raw))
         ctx.warn(
             scope,
             "yaml_parse",
             f"Frontmatter is not valid YAML ({detail}); "
             f"recovered {len(recovered)} field(s) by scraping.",
+            file=file,
+            line=line,
         )
         return recovered
     if data is None:
         return {}
     if not isinstance(data, dict):
-        ctx.warn(scope, "frontmatter_type", "Frontmatter is not a mapping; ignoring it.")
+        ctx.warn(
+            scope, "frontmatter_type", "Frontmatter is not a mapping; ignoring it.", file=file
+        )
         return {}
-    return data
+    return normalise_keys(data)
+
+
+HEADING_RE = re.compile(r"^#[ \t]+(.+?)[ \t#]*$")
+ITALIC_LINE_RE = re.compile(r"^(?:\*([^*]+)\*|_([^_]+)_)$")
+
+
+def lift_heading(body: str) -> tuple[str, str | None, str | None]:
+    """Take a leading ``# Heading`` (and an italic line under it) off the body.
+
+    Returns ``(body, headline, deck)``. A model that writes an article the way
+    it would write any document — a title line, a one-line summary in italics,
+    then the text — has written a valid article; the frontmatter is optional.
+    """
+    lines = body.splitlines()
+    i = 0
+    while i < len(lines) and not lines[i].strip():
+        i += 1
+    if i >= len(lines):
+        return body, None, None
+    m = HEADING_RE.match(lines[i].strip())
+    if not m:
+        return body, None, None
+    headline = m.group(1).strip()
+    i += 1
+    while i < len(lines) and not lines[i].strip():
+        i += 1
+    deck = None
+    if i < len(lines):
+        d = ITALIC_LINE_RE.match(lines[i].strip())
+        if d:
+            deck = (d.group(1) or d.group(2)).strip()
+            i += 1
+    return "\n".join(lines[i:]).lstrip("\n"), headline, deck
 
 
 # --------------------------------------------------------------------------
@@ -272,18 +401,29 @@ def scan_article(path: Path, edition_id: str, ctx: _Ctx) -> Article | None:
         return None
 
     raw_fm, body = split_frontmatter(text)
-    fm = parse_frontmatter(raw_fm, scope, ctx)
+    fm = parse_frontmatter(raw_fm, scope, ctx, file=path.name)
 
     article_id = _as_text(fm.get("id")) or path.stem
     headline = _as_text(fm.get("headline"))
+    deck = _as_text(fm.get("deck"))
     if not headline:
-        ctx.warn(scope, "no_headline", "No headline in frontmatter; using the filename.")
+        body, headline, lifted_deck = lift_heading(body)
+        deck = deck or lifted_deck
+    if not headline:
+        ctx.warn(
+            scope,
+            "no_headline",
+            "No headline in the frontmatter and no leading heading; using the filename.",
+            file=path.name,
+        )
         headline = path.stem.replace("-", " ").title()
 
     span = str(fm.get("span", "1col")).strip()
     if span not in VALID_SPANS:
         if "span" in fm:
-            ctx.warn(scope, "bad_span", f"Unknown span {span!r}; falling back to '1col'.")
+            ctx.warn(
+                scope, "bad_span", f"Unknown span {span!r}; falling back to '1col'.", file=path.name
+            )
         span = "1col"
 
     image_key = _as_text(fm.get("image"))
@@ -293,14 +433,16 @@ def scan_article(path: Path, edition_id: str, ctx: _Ctx) -> Article | None:
     focus = str(fm.get("focus", "center")).strip().lower()
     if focus not in VALID_FOCUS:
         if "focus" in fm:
-            ctx.warn(scope, "bad_focus", f"Unknown focus {focus!r}; using 'center'.")
+            ctx.warn(
+                scope, "bad_focus", f"Unknown focus {focus!r}; using 'center'.", file=path.name
+            )
         focus = "center"
 
     return Article(
         id=article_id,
         file=path.name,
         headline=headline,
-        deck=_as_text(fm.get("deck")),
+        deck=deck,
         section=(_as_text(fm.get("section")) or "misc").lower(),
         byline=_as_text(fm.get("byline")),
         priority=_as_int(fm.get("priority"), 3, 1, 5),
@@ -308,6 +450,7 @@ def scan_article(path: Path, edition_id: str, ctx: _Ctx) -> Article | None:
         image=image_key,
         caption=_as_text(fm.get("caption")),
         focus=focus,  # type: ignore[arg-type]
+        focus_explicit="focus" in fm,
         sources=parse_sources(fm.get("sources") or fm.get("source"), scope, ctx),
         word_count=len(body.split()),
         body=body.strip(),
@@ -320,10 +463,71 @@ def scan_article(path: Path, edition_id: str, ctx: _Ctx) -> Article | None:
 # --------------------------------------------------------------------------
 
 
+@dataclass
+class Paper:
+    """The standing facts of a paper, read once from ``editions/paper.json``.
+
+    Everything here is true of every edition, which is exactly why a generator
+    should never have to write it. An edition that wants to differ can still
+    say so in its own ``edition.json``.
+    """
+
+    masthead: str | None = None
+    motto: str | None = None
+    founded: date | None = None
+    volume: int | None = None
+    sections: list[Section] = field(default_factory=list)
+    source: str | None = None
+
+
+def read_paper(root: Path, ctx: _Ctx | None = None) -> Paper:
+    path = root / "paper.json"
+    if not path.exists():
+        return Paper()
+    text = path.read_text(encoding="utf-8")
+    try:
+        data = json.loads(text)
+    except Exception as exc:
+        if ctx:
+            ctx.warn("edition", "bad_paper", f"paper.json is not valid JSON ({exc}).", file="paper.json")
+        return Paper(source=text)
+    if not isinstance(data, dict):
+        if ctx:
+            ctx.warn("edition", "bad_paper", "paper.json is not an object.", file="paper.json")
+        return Paper(source=text)
+
+    founded = None
+    if data.get("founded"):
+        try:
+            founded = date.fromisoformat(str(data["founded"]))
+        except ValueError:
+            if ctx:
+                ctx.warn(
+                    "edition", "bad_paper", "paper.json: founded is not a date.", file="paper.json"
+                )
+
+    sections: list[Section] = []
+    for raw in data.get("sections") or []:
+        if isinstance(raw, str):
+            sections.append(Section(id=raw.strip().lower(), name=raw.strip().title()))
+        elif isinstance(raw, dict):
+            sid = str(raw.get("id") or raw.get("name") or "").strip().lower()
+            if sid:
+                sections.append(Section(id=sid, name=str(raw.get("name") or sid.title())))
+
+    return Paper(
+        masthead=_as_text(data.get("masthead")),
+        motto=_as_text(data.get("motto")),
+        founded=founded,
+        volume=_as_int(data["volume"], 1, 0, 10_000) if "volume" in data else None,
+        sections=sections,
+        source=text,
+    )
+
+
 def _read_manifest(edition_dir: Path, ctx: _Ctx) -> dict[str, Any]:
     manifest_path = edition_dir / "edition.json"
     if not manifest_path.exists():
-        ctx.warn("edition", "no_manifest", "No edition.json; ordering by filename.")
         return {}
     try:
         data = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -336,10 +540,43 @@ def _read_manifest(edition_dir: Path, ctx: _Ctx) -> dict[str, Any]:
     return data
 
 
+def _sections_from_catalogue(
+    paper: Paper, articles: list[Article], ctx: _Ctx
+) -> list[Section]:
+    """The ordinary path: no manifest, the paper's own section order.
+
+    Each article says which section it belongs to; the catalogue says what
+    order the sections come in; priority and then filename order the stories
+    within one. A section the catalogue does not know is printed anyway, after
+    the ones it does, and noted.
+    """
+    known = {s.id: Section(id=s.id, name=s.name, articles=[]) for s in paper.sections}
+    extra: dict[str, Section] = {}
+    for article in sorted(articles, key=lambda a: (a.priority, a.file)):
+        section = known.get(article.section)
+        if section is None:
+            section = extra.get(article.section)
+            if section is None:
+                section = Section(id=article.section, name=article.section.title(), articles=[])
+                extra[article.section] = section
+                if paper.sections:
+                    ctx.warn(
+                        f"article:{article.id}",
+                        "unknown_section",
+                        f"Section {article.section!r} is not in paper.json; printed after the others.",
+                        file=article.file,
+                    )
+        section.articles.append(article.id)
+    return [s for s in [*known.values(), *extra.values()] if s.articles]
+
+
 def _build_sections(
-    manifest: dict[str, Any], articles: list[Article], ctx: _Ctx
+    manifest: dict[str, Any], articles: list[Article], ctx: _Ctx, paper: Paper
 ) -> list[Section]:
     """Order articles into sections, tolerating a manifest that disagrees with disk."""
+    if not manifest.get("sections"):
+        return _sections_from_catalogue(paper, articles, ctx)
+
     by_id = {a.id: a for a in articles}
     sections: list[Section] = []
     placed: set[str] = set()
@@ -389,15 +626,50 @@ def _build_sections(
     return [s for s in sections if s.articles]
 
 
-def scan_edition(edition_dir: Path, base_url: str = "") -> Edition:
+def _issue_number(edition_dir: Path, when: date | None, paper: Paper) -> int:
+    """The number on the masthead when the edition did not say.
+
+    Days since the paper was founded, when it says when that was: stable no
+    matter which old editions have been pruned. Otherwise the edition's
+    position among its siblings on disk.
+    """
+    if paper.founded and when:
+        return max(1, (when - paper.founded).days + 1)
+    siblings = list_edition_dirs(edition_dir.parent)
+    earlier = [d for d in siblings if d.name <= edition_dir.name]
+    return max(1, len(earlier))
+
+
+def _volume(when: date | None, paper: Paper) -> int:
+    if paper.volume is not None:
+        return paper.volume
+    if paper.founded and when:
+        return max(1, when.year - paper.founded.year + 1)
+    return 1
+
+
+def _edition_date(edition_id: str) -> date | None:
+    try:
+        return date.fromisoformat(edition_id)
+    except ValueError:
+        return None
+
+
+def scan_edition(edition_dir: Path, base_url: str = "", paper: Paper | None = None) -> Edition:
     """Scan one edition directory into a fully resolved :class:`Edition`."""
     ctx = _Ctx()
     edition_id = edition_dir.name
+    if paper is None:
+        paper = read_paper(edition_dir.parent, ctx)
     manifest = _read_manifest(edition_dir, ctx)
     manifest_path = edition_dir / "edition.json"
-    manifest_source = (
-        manifest_path.read_text(encoding="utf-8") if manifest_path.exists() else None
-    )
+    if manifest_path.exists():
+        manifest_source: str | None = manifest_path.read_text(encoding="utf-8")
+        manifest_file: str | None = "edition.json"
+    elif paper.source is not None:
+        manifest_source, manifest_file = paper.source, "paper.json"
+    else:
+        manifest_source = manifest_file = None
 
     articles_dir = edition_dir / "articles"
     files = sorted(articles_dir.glob("*.md")) if articles_dir.is_dir() else []
@@ -441,30 +713,47 @@ def scan_edition(edition_dir: Path, base_url: str = "") -> Edition:
         else:
             images[key] = asset
 
-    sections = _build_sections(manifest, articles, ctx)
+    sections = _build_sections(manifest, articles, ctx, paper)
+    when = _edition_date(str(manifest.get("date") or edition_id))
+
+    generated_at = _as_text(manifest.get("generated_at"))
+    if not generated_at and files:
+        newest = max(f.stat().st_mtime for f in files)
+        generated_at = datetime.fromtimestamp(newest).astimezone().isoformat(timespec="seconds")
 
     digest = hashlib.sha256()
     for article in articles:
         digest.update(article.id.encode())
         digest.update(article.body.encode())
 
-    return Edition(
+    edition = Edition(
         schema=int(manifest.get("schema") or 1),
         id=edition_id,
         date=str(manifest.get("date") or edition_id),
-        volume=_as_int(manifest.get("volume"), 1, 0, 10_000),
-        number=_as_int(manifest.get("number"), 1, 0, 100_000),
-        masthead=str(manifest.get("masthead") or "The Vael Paper"),
-        motto=_as_text(manifest.get("motto")),
-        generated_at=_as_text(manifest.get("generated_at")),
+        volume=(
+            _as_int(manifest["volume"], 1, 0, 10_000)
+            if "volume" in manifest
+            else _volume(when, paper)
+        ),
+        number=(
+            _as_int(manifest["number"], 1, 0, 100_000)
+            if "number" in manifest
+            else _issue_number(edition_dir, when, paper)
+        ),
+        masthead=str(manifest.get("masthead") or paper.masthead or "The Vael Paper"),
+        motto=_as_text(manifest.get("motto")) or paper.motto,
+        generated_at=generated_at,
         front_template=_as_text(manifest.get("front_template")),
         content_hash=digest.hexdigest()[:16],
         manifest_source=manifest_source,
+        manifest_file=manifest_file,
         sections=sections,
         articles=articles,
         images=images,
         warnings=ctx.warnings,
     )
+    edition.lint = lint_edition(edition)
+    return edition
 
 
 def list_edition_dirs(root: Path) -> list[Path]:

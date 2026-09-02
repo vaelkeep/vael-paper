@@ -24,6 +24,13 @@ class Warning_(BaseModel):
     """
 
     scope: str  # "edition" | "article:<id>" | "image:<key>"
+    code: str
+    message: str
+    # Where to look, when the scanner knows: a file in the edition and a
+    # 1-based line. Given for frontmatter problems so a generator can fix
+    # what it wrote without re-reading the whole article.
+    file: str | None = None
+    line: int | None = None
     code: str  # machine-readable: "yaml_parse", "missing_image", ...
     message: str
 
@@ -66,6 +73,8 @@ class Article(BaseModel):
     image: str | None = None
     caption: str | None = None
     focus: Focus = "center"
+    # Whether the author said where to hold the image; lint only, never sent.
+    focus_explicit: bool = Field(False, exclude=True)
     sources: list[SourceRef] = Field(default_factory=list)
     word_count: int = 0
     body: str  # raw markdown; the reader parses it in a worker
@@ -91,12 +100,17 @@ class Edition(BaseModel):
     generated_at: str | None = None
     front_template: str | None = None
     content_hash: str = ""
-    # edition.json as written, for the reader's source view. None when absent.
+    # The manifest as written, for the reader's source view: edition.json when
+    # the edition has one, otherwise the paper's own paper.json. None when neither.
     manifest_source: str | None = None
+    manifest_file: str | None = None
     sections: list[Section] = Field(default_factory=list)
     articles: list[Article] = Field(default_factory=list)
     images: dict[str, ImageAsset] = Field(default_factory=dict)
     warnings: list[Warning_] = Field(default_factory=list)
+    # Advice rather than problems: the edition prints, but a table will
+    # truncate, a plate is an awkward shape, a story is thin. See lint.py.
+    lint: list[Warning_] = Field(default_factory=list)
 
     model_config = {"populate_by_name": True}
 

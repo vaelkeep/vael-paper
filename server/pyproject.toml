@@ -15,6 +15,7 @@ dependencies = [
 [project.scripts]
 vael-paper = "vael_paper.__main__:main"
 vael-paper-export = "vael_paper.export:main"
+vael-paper-check = "vael_paper.check:main"
 
 [dependency-groups]
 dev = ["pytest>=8.0", "httpx2>=0.1"]

@@ -194,7 +194,7 @@ class Reader {
       },
     );
 
-    mountPrintersMarks(document.body, this.edition.warnings);
+    mountPrintersMarks(document.body, this.edition.warnings, this.edition.manifest.lint ?? []);
     this.source = mountSourceView(document.body, this.edition, () => this.visibleArticleIds());
   }
 

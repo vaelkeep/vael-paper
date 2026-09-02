@@ -1,0 +1,63 @@
+{
+  "masthead": "The John Smith Daily",
+  "motto": "Printed nightly, for one reader",
+  "founded": "2026-02-01",
+  "sections": [
+    {
+      "id": "today",
+      "name": "Today"
+    },
+    {
+      "id": "week",
+      "name": "The Week Ahead"
+    },
+    {
+      "id": "local",
+      "name": "Local"
+    },
+    {
+      "id": "sports",
+      "name": "Sports"
+    },
+    {
+      "id": "world",
+      "name": "World"
+    },
+    {
+      "id": "technology",
+      "name": "Technology"
+    },
+    {
+      "id": "money",
+      "name": "Money"
+    },
+    {
+      "id": "correspondence",
+      "name": "Correspondence"
+    },
+    {
+      "id": "notes",
+      "name": "From Your Notes"
+    },
+    {
+      "id": "wellbeing",
+      "name": "Wellbeing"
+    },
+    {
+      "id": "movies",
+      "name": "Movies"
+    },
+    {
+      "id": "dining",
+      "name": "Dining"
+    },
+    {
+      "id": "weekend",
+      "name": "Weekend"
+    },
+    {
+      "id": "household",
+      "name": "Household"
+    }
+  ]
+}

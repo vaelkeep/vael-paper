@@ -105,3 +105,11 @@ def test_a_freshly_written_edition_is_picked_up_without_a_restart(tmp_path: Path
     )
 
     assert client.get("/api/editions/latest").json()["id"] == "2026-09-04"
+
+
+def test_the_check_endpoint_reports_marks_and_lint_with_locations(client: TestClient) -> None:
+    body = client.get("/api/editions/2026-09-02/check").json()
+    assert body["ok"] is False  # the fixture carries one deliberate mark
+    (mark,) = body["marks"]
+    assert mark["code"] == "yaml_parse" and mark["file"] == "08-broken.md" and mark["line"]
+    assert client.get("/api/editions/2026-09-02/check.json").json() == body

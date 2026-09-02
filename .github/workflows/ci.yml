@@ -113,3 +113,11 @@ jobs:
           assert not demo_codes, f"the demo edition has printer's marks: {demo_codes}"
           assert all(a.source for a in demo.articles), "an article lost its source"
           PY
+
+      - name: The checker agrees
+        working-directory: server
+        run: |
+          # The fixture is allowed its mark and its lint; the demo is allowed
+          # neither, because it is what a generator should aim at.
+          uv run vael-paper-check ../editions/2026-09-02 || true
+          uv run vael-paper-check --strict ../editions/2026-09-03

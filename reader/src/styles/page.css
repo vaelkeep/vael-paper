@@ -233,6 +233,11 @@
   padding-block-start: 0.5rem;
 }
 
+/* Lint is advice; it should read a shade quieter than a mark. */
+.marks__item--lint {
+  color: var(--ink-soft);
+}
+
 .marks__scope {
   display: block;
   font-variant-caps: all-small-caps;

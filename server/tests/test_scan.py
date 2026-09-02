@@ -266,7 +266,8 @@ def test_an_edition_with_no_manifest_still_prints(tmp_path: Path) -> None:
     edition = scan_edition(tmp_path)
     assert len(edition.articles) == 1
     assert [s.id for s in edition.sections] == ["news"]
-    assert "no_manifest" in [w.code for w in edition.warnings]
+    # This is the ordinary way to publish, so it is not a warning.
+    assert edition.warnings == []
 
 
 def test_an_entirely_empty_directory_does_not_raise(tmp_path: Path) -> None:
@@ -291,3 +292,158 @@ def test_the_source_view_gets_the_files_exactly_as_written() -> None:
         on_disk = (SAMPLE / "articles" / article.file).read_text(encoding="utf-8")
         assert article.source == on_disk
     assert edition.manifest_source == (SAMPLE / "edition.json").read_text(encoding="utf-8")
+
+
+# --------------------------------------------------------------------------
+# the paper, and editions that are only a folder of articles
+# --------------------------------------------------------------------------
+
+
+def _write(dir_: Path, name: str, text: str) -> None:
+    (dir_ / "articles").mkdir(parents=True, exist_ok=True)
+    (dir_ / "articles" / name).write_text(text, encoding="utf-8")
+
+
+def test_paper_json_supplies_what_never_changes(tmp_path: Path) -> None:
+    (tmp_path / "paper.json").write_text(
+        json.dumps(
+            {
+                "masthead": "The Test Gazette",
+                "motto": "Set in type",
+                "founded": "2026-01-01",
+                "sections": [{"id": "world", "name": "World"}, {"id": "local", "name": "Local"}],
+            }
+        )
+    )
+    edition = tmp_path / "2026-01-10"
+    _write(edition, "01-b.md", "---\nheadline: B\nsection: local\n---\n" + "w " * 80)
+    _write(edition, "02-a.md", "---\nheadline: A\nsection: world\npriority: 2\n---\n" + "w " * 80)
+    _write(edition, "03-c.md", "---\nheadline: C\nsection: world\npriority: 1\n---\n" + "w " * 80)
+
+    scanned = scan_edition(edition)
+    assert scanned.masthead == "The Test Gazette"
+    assert scanned.motto == "Set in type"
+    assert scanned.number == 10  # ten days into the paper's life
+    assert scanned.volume == 1
+    # Catalogue order for sections; priority, then filename, within one.
+    assert [(s.id, s.articles) for s in scanned.sections] == [
+        ("world", ["03-c", "02-a"]),
+        ("local", ["01-b"]),
+    ]
+    assert scanned.manifest_file == "paper.json"
+    assert scanned.warnings == []
+
+
+def test_an_edition_manifest_still_overrides_the_paper(tmp_path: Path) -> None:
+    (tmp_path / "paper.json").write_text(json.dumps({"masthead": "Paper", "founded": "2026-01-01"}))
+    edition = tmp_path / "2026-01-10"
+    _write(edition, "01-a.md", "---\nheadline: A\nsection: s\n---\nBody.\n")
+    (edition / "edition.json").write_text(json.dumps({"masthead": "Special", "number": 99}))
+    scanned = scan_edition(edition)
+    assert scanned.masthead == "Special"
+    assert scanned.number == 99
+    assert scanned.manifest_file == "edition.json"
+
+
+def test_a_section_the_paper_does_not_know_is_printed_last_and_noted(tmp_path: Path) -> None:
+    (tmp_path / "paper.json").write_text(json.dumps({"sections": ["world"]}))
+    edition = tmp_path / "2026-01-02"
+    _write(edition, "01-a.md", "---\nheadline: A\nsection: cats\n---\nBody.\n")
+    _write(edition, "02-b.md", "---\nheadline: B\nsection: world\n---\nBody.\n")
+    scanned = scan_edition(edition)
+    assert [s.id for s in scanned.sections] == ["world", "cats"]
+    assert [w.code for w in scanned.warnings] == ["unknown_section"]
+
+
+def test_without_a_founding_date_the_number_is_the_position_on_disk(tmp_path: Path) -> None:
+    for name in ["2026-03-01", "2026-03-02", "2026-03-05"]:
+        _write(tmp_path / name, "01-a.md", "---\nheadline: A\n---\nBody.\n")
+    assert scan_edition(tmp_path / "2026-03-05").number == 3
+    assert scan_edition(tmp_path / "2026-03-01").number == 1
+
+
+# --------------------------------------------------------------------------
+# frontmatter that forgives
+# --------------------------------------------------------------------------
+
+
+def test_a_colon_in_a_headline_is_not_an_error(tmp_path: Path, ctx: _Ctx) -> None:
+    _write(tmp_path, "01-a.md", "---\nheadline: Markets: A Cautious Session Ends Lower\ndeck: Rates: what next?\n---\nBody.\n")
+    article = scan_article(tmp_path / "articles" / "01-a.md", "e", ctx)
+    assert article is not None
+    assert article.headline == "Markets: A Cautious Session Ends Lower"
+    assert article.deck == "Rates: what next?"
+    assert ctx.warnings == []
+
+
+def test_common_aliases_and_any_case_are_accepted(tmp_path: Path, ctx: _Ctx) -> None:
+    _write(
+        tmp_path,
+        "01-a.md",
+        "---\nTitle: Hello\nSubtitle: A deck\nAuthor: Me\nphoto: images/x.png\ncategory: World\nrank: 1\n---\nBody.\n",
+    )
+    article = scan_article(tmp_path / "articles" / "01-a.md", "e", ctx)
+    assert article is not None
+    assert (article.headline, article.deck, article.byline) == ("Hello", "A deck", "Me")
+    assert article.image == "images/x.png"
+    assert article.section == "world"
+    assert article.priority == 1
+
+
+def test_a_leading_heading_is_the_headline_when_there_is_no_frontmatter(
+    tmp_path: Path, ctx: _Ctx
+) -> None:
+    _write(tmp_path, "01-a.md", "# Rain by Six\n\n*Arranged in the order it will happen*\n\nThe body starts here.\n")
+    article = scan_article(tmp_path / "articles" / "01-a.md", "e", ctx)
+    assert article is not None
+    assert article.headline == "Rain by Six"
+    assert article.deck == "Arranged in the order it will happen"
+    assert article.body == "The body starts here."
+    assert ctx.warnings == []
+
+
+def test_a_yaml_error_says_which_line(tmp_path: Path, ctx: _Ctx) -> None:
+    _write(tmp_path, "01-a.md", "---\nheadline: X\ndeck: [unclosed\n---\nBody.\n")
+    scan_article(tmp_path / "articles" / "01-a.md", "e", ctx)
+    (warning,) = ctx.warnings
+    assert warning.code == "yaml_parse"
+    assert warning.file == "01-a.md"
+    assert warning.line == 3
+
+
+# --------------------------------------------------------------------------
+# lint
+# --------------------------------------------------------------------------
+
+
+def test_lint_flags_a_table_too_wide_for_a_column(tmp_path: Path) -> None:
+    body = ("w " * 70) + "\n\n| Day | Time | What | Where |\n|---|---|---|---|\n| Thu 3 | 2:30 pm | Dentist, cleaning and a check | Pennsylvania Avenue SE |\n"
+    _write(tmp_path / "2026-01-02", "01-a.md", "---\nheadline: A\n---\n" + body)
+    edition = scan_edition(tmp_path / "2026-01-02")
+    codes = {w.code for w in edition.lint}
+    assert "table_wide" in codes and "cell_long" in codes
+    wide = next(w for w in edition.lint if w.code == "table_wide")
+    assert wide.file == "01-a.md" and wide.line == 6
+
+
+def test_lint_is_quiet_about_a_tall_photo_the_author_has_held(tmp_path: Path) -> None:
+    from PIL import Image
+
+    edition = tmp_path / "2026-01-02"
+    (edition / "images").mkdir(parents=True)
+    Image.new("RGB", (400, 700), "grey").save(edition / "images" / "tall.png")
+    _write(edition, "01-a.md", "---\nheadline: A\nimage: images/tall.png\n---\n" + "w " * 80)
+    _write(edition, "02-b.md", "---\nheadline: B\nimage: images/tall.png\nfocus: top\n---\n" + "w " * 80)
+    unheld = scan_edition(edition)
+    # 02-b holds it, so the edition as a whole is fine.
+    assert "plate_aspect" not in {w.code for w in unheld.lint}
+    (edition / "articles" / "02-b.md").unlink()
+    assert "plate_aspect" in {w.code for w in scan_edition(edition).lint}
+    assert "focus_explicit" not in scan_edition(edition).model_dump_wire()["articles"][0]
+
+
+def test_the_demo_edition_is_clean_and_the_fixture_keeps_its_one_mark() -> None:
+    demo = scan_edition(SAMPLE.parent / "2026-09-03")
+    assert demo.warnings == [] and demo.lint == [], (demo.warnings, demo.lint)
+    fixture = scan_edition(SAMPLE)
+    assert [w.code for w in fixture.warnings] == ["yaml_parse"]

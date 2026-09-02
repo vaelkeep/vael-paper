@@ -21,5 +21,6 @@ site/
 # Local editions dropped by the generator. The committed sample edition is
 # force-added so the reader always has a fixture to render.
 editions/*
+!editions/paper.json
 !editions/2026-09-02/
 !editions/2026-09-03/

@@ -18,6 +18,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .models import Edition
+from .check import report
 from .scan import list_edition_dirs, scan_edition, summarize
 
 log = logging.getLogger(__name__)
@@ -45,6 +46,11 @@ class EditionCache:
             if path.is_file():
                 count += 1
                 newest = max(newest, path.stat().st_mtime)
+        # The paper's standing config feeds every edition, so a change to it
+        # must invalidate them all.
+        paper = edition_dir.parent / "paper.json"
+        if paper.exists():
+            newest = max(newest, paper.stat().st_mtime)
         return count, newest
 
     def get(self, edition_id: str) -> Edition:
@@ -116,6 +122,12 @@ def create_app(
     @app.get("/api/editions/latest.json")
     def latest() -> JSONResponse:
         return JSONResponse(cache.get(cache.latest_id()).model_dump_wire())
+
+    @app.get("/api/editions/{edition_id}/check")
+    @app.get("/api/editions/{edition_id}/check.json")
+    def check(edition_id: str) -> JSONResponse:
+        """Marks and lint for one edition, for a generator's second pass."""
+        return JSONResponse(report(cache.get(edition_id)))
 
     @app.get("/api/editions/{edition_id}")
     def one(edition_id: str) -> JSONResponse:

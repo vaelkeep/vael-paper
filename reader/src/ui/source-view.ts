@@ -62,8 +62,8 @@ export function mountSourceView(
   };
 
   const manifestTab = (): Tab => ({
-    key: 'edition.json',
-    label: 'edition.json',
+    key: 'manifest',
+    label: edition.manifest.manifest_file ?? 'edition.json',
     kind: 'manifest',
     text:
       edition.manifest.manifest_source ??

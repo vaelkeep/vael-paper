@@ -9,24 +9,54 @@ script, you with a text editor — can publish an edition.
 
 ## Shape
 
-One directory per edition, named `YYYY-MM-DD`:
+The paper is described once. An edition is a folder of articles.
 
 ```
 editions/
-  2026-09-02/
-    edition.json          ordering and sectioning
+  paper.json              the masthead, the motto, the section order — written once
+  2026-09-03/
     articles/
-      01-markets-slip.md  one file per story
-      02-on-quiet-machines.md
+      01-your-thursday.md one file per story
+      02-orange-line.md
     images/
-      markets-chart.png
+      rain-by-hour.png
 ```
 
-The reading order is: sections in the order `edition.json` lists them, and
-articles in the order each section lists them. The first article in that order
-is the lead, and gets the front page's full-width headline treatment.
+That is a complete, publishable edition. There is no manifest to keep in step
+with the files: each article says which section it belongs to, `paper.json`
+says what order the sections come in, and within a section stories run by
+`priority` and then by filename. The highest-priority story in the paper is
+the lead and gets the front page's full-width headline treatment.
 
-## `edition.json`
+## `paper.json`
+
+The things that are true of every edition, so a generator never writes them.
+
+```json
+{
+  "masthead": "The John Smith Daily",
+  "motto": "Printed nightly, for one reader",
+  "founded": "2026-02-01",
+  "sections": [
+    { "id": "today", "name": "Today" },
+    { "id": "week", "name": "The Week Ahead" },
+    { "id": "local", "name": "Local" },
+    { "id": "money", "name": "Money" }
+  ]
+}
+```
+
+`founded` gives every edition its number for free — days since the paper
+began — and its volume, the year of its life. Both survive old editions being
+pruned. Without it, an edition is numbered by its position among the
+directories on disk. A section an article names that the catalogue does not
+know is still printed, after the others, with a note.
+
+## `edition.json` (optional)
+
+An edition may carry its own manifest to override the paper for one day:
+a different masthead for a special, an explicit number, or a hand-picked
+order of stories.
 
 ```json
 {
@@ -44,9 +74,9 @@ is the lead, and gets the front page's full-width headline treatment.
 }
 ```
 
-Only `sections` really matters. Everything else has a sensible default, and the
-file may be omitted entirely — the scanner will then order articles by filename
-and group them by each article's own `section` field.
+Any field present here wins over `paper.json`. When `sections` is given it
+replaces the catalogue order entirely and lists stories explicitly; a story
+on disk that it forgets is appended under its own section, with a note.
 
 ## Article files
 
@@ -94,6 +124,29 @@ should never be asked to.
 The server also passes each file through untouched as `source`, and
 `edition.json` as `manifest_source`, so the reader's **Source** button can show
 the markdown behind any page exactly as the generator wrote it.
+
+### The frontmatter forgives
+
+A generator that writes an article the way it would write any document has
+written a valid article. Specifically:
+
+- **The frontmatter is optional.** A leading `# Heading` is the headline, and
+  an italic line directly under it (`*Arranged in the order it will happen*`)
+  is the deck. The rest is the body.
+- **Colons are not an error.** `headline: Markets: A Cautious Session` is the
+  most common way a model breaks YAML, and it is quoted for you before YAML
+  sees it. So is a value that begins with `*`, `&`, `!`, `%`, `@` or a
+  backtick.
+- **Common names are accepted.** `title`, `subtitle`/`standfirst`/`summary`,
+  `author`/`by`, `photo`/`img`, `category`/`desk`, `link`/`links`/`source`,
+  `rank`, `crop` — each folds to the field it means, and keys are matched in
+  any case.
+- **Everything but the headline has a default.** `section` falls back to
+  `misc`, `priority` to 3, `span` to a single column, `focus` to `center`.
+
+When YAML still refuses — an unclosed bracket, a stray indent — the file is
+scraped line by line for whatever `key: value` pairs survive, and the printer's
+mark says which line to look at.
 
 ### Images are cropped, so say where to hold them
 
@@ -211,9 +264,33 @@ four in the morning; the paper still has to print at breakfast.
 
 A malformed article, a missing image, a section listing a story that isn't on
 disk — each becomes a **printer's mark**, visible behind a small affordance in
-the reader, and the edition prints without it. Frontmatter that YAML refuses to
-parse is scraped line-by-line for whatever `key: value` pairs survive, so one
-bad field costs that field rather than the article.
+the reader, and the edition prints without it. Marks carry a file and, where
+the scanner knows it, a line. Frontmatter that YAML refuses to parse is scraped
+line-by-line for whatever `key: value` pairs survive, so one bad field costs
+that field rather than the article.
+
+Alongside the marks the scanner produces **lint**: advice about things that
+will print, but not well. A table wider than a column, a cell that will be
+cut with an ellipsis, a tall image with no `focus`, a story too short to carry
+a headline. The numbers come from the reader's own geometry.
+
+### Checking an edition before it prints
+
+```
+$ vael-paper-check editions/2026-09-04
+2026-09-04  The John Smith Daily  No. 216  15 articles, 2 images, 11 sections  (paper.json)
+  marks (1)
+    03-rates.md:4            yaml_parse   Frontmatter is not valid YAML (while parsing a flow sequence); recovered 5 field(s) by scraping.
+  lint (1)
+    07-ledger.md:18          table_wide   Table needs about 58 characters across and a column fits about 52; drop a column or shorten the longest cells.
+```
+
+`--json` gives the same report as data, `--all` checks every edition, and
+`--strict` fails on lint as well as marks. The exit status is 1 when the
+edition has marks, so a nightly job can write, check, fix and only then
+publish. The server answers the same report at
+`GET /api/editions/<date>/check`, and the reader lists both marks and lint
+behind its printer's-marks toggle.
 
 `editions/2026-09-02/articles/08-broken.md` exists precisely to exercise this
 path, and should be kept broken.
@@ -230,8 +307,7 @@ no watcher. Editions are fingerprinted on file count and mtime, so a rewrite in
 place is noticed too.
 
 ```
-editions/2026-09-03/
-  edition.json
+editions/2026-09-04/
   articles/*.md
   images/*
 ```

@@ -184,16 +184,17 @@ http://localhost:8791/#/2026-09-02/p4                    ← resolved, then rewr
 
 ## 📰 Publishing an edition
 
-Write a directory. The server picks it up on the next request — no restart, no
-watcher.
+Write a folder of markdown. The server picks it up on the next request — no
+restart, no watcher, no manifest to keep in step.
 
 ```
-editions/2026-09-03/
-├── edition.json          # ordering and sections
-├── articles/
-│   └── 01-markets.md     # YAML frontmatter + markdown
-└── images/
-    └── chart.png
+editions/
+├── paper.json            # masthead, motto, founding date, section order — written once
+└── 2026-09-04/
+    ├── articles/
+    │   └── 01-markets.md # markdown, with or without frontmatter
+    └── images/
+        └── chart.png
 ```
 
 ```markdown
@@ -201,7 +202,6 @@ editions/2026-09-03/
 headline: Markets Slip as Traders Weigh the Rate Path
 deck: A cautious session ends lower
 section: markets
-byline: The Vael Desk
 image: images/chart.png
 sources:
   - name: Reuters
@@ -212,9 +212,28 @@ The body starts here, in plain markdown. Pull quotes, lists, tables and
 figures all become newspaper furniture.
 ```
 
-Image dimensions, word counts and whether a picture is a photograph or a chart
-are all worked out by the server — a generator is never asked for something it
-cannot reliably know. **Full specification: [`docs/FORMAT.md`](docs/FORMAT.md).**
+The format is built for a model writing unattended. A leading `# Heading` is
+a headline if there is no frontmatter; a colon in a title is not an error;
+`title`, `author`, `photo` and the other names a model reaches for are
+accepted. Image dimensions, word counts, issue numbers and whether a picture
+is a photograph or a chart are all worked out by the server — a generator is
+never asked for something it cannot reliably know.
+
+Then check it the way the server will read it:
+
+```
+$ vael-paper-check editions/2026-09-04
+2026-09-04  The John Smith Daily  No. 216  15 articles, 2 images, 11 sections  (paper.json)
+  marks (0)
+  lint (1)
+    07-ledger.md:18   table_wide   Table needs about 58 characters across and a column fits about 52; drop a column or shorten the longest cells.
+```
+
+Marks are things that are wrong, lint is things that will print badly, both
+come with a file and line, and `--json` returns the report as data so a
+generator can fix its own work in a second pass. The same report is served at
+`/api/editions/<date>/check`. **Full specification:
+[`docs/FORMAT.md`](docs/FORMAT.md).**
 
 ## ⚙️ Configuration
 

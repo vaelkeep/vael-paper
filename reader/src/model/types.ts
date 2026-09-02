@@ -20,6 +20,9 @@ export interface Warning {
   scope: string;
   code: string;
   message: string;
+  /** Where to look, when the scanner knew. */
+  file?: string | null;
+  line?: number | null;
 }
 
 export interface ImageAsset {
@@ -67,8 +70,11 @@ export interface Section {
 
 export interface EditionManifest {
   schema: number;
-  /** edition.json as written, for the source view. */
+  /** The manifest as written, for the source view, and which file it was. */
   manifest_source?: string | null;
+  manifest_file?: string | null;
+  /** Advice from the server's lint pass; the edition prints regardless. */
+  lint?: Warning[];
   id: string;
   date: string;
   volume: number;
