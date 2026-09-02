@@ -94,13 +94,20 @@ Open **http://localhost:8791** and you are reading the sample edition.
 
 ### Run it every day
 
+On macOS, run it as a launchd agent. The plist is a template — launchd needs
+absolute paths and will not expand `~` — so substitute them as you install it:
+
 ```bash
-cp launchd/com.coreautomation.vaelpaper.plist ~/Library/LaunchAgents/
+mkdir -p data/logs
+sed -e "s|__VAEL_PAPER__|$PWD|g" -e "s|__UV__|$(command -v uv)|g" \
+    launchd/com.coreautomation.vaelpaper.plist \
+    > ~/Library/LaunchAgents/com.coreautomation.vaelpaper.plist
+
 launchctl load ~/Library/LaunchAgents/com.coreautomation.vaelpaper.plist
 ```
 
-The server binds `0.0.0.0`, so it is reachable from a tablet on the same network
-or over Tailscale.
+The server binds `0.0.0.0`, so it is reachable from a tablet on the same
+network, or over a private network such as Tailscale.
 
 ## 💡 Usage
 
@@ -146,6 +153,11 @@ http://localhost:8791/#/2026-09-02/s/markets             ← jump to a section
 http://localhost:8791/#/2026-09-02/p4                    ← resolved, then rewritten
 ```
 
+> **The sample edition is fiction.** The stories, the market figures and the
+> companies in `editions/2026-09-02/` were written to exercise the layout —
+> long articles that force continuations, tables that must break across
+> columns, a deliberately malformed file. None of it is reporting.
+
 ## 📰 Publishing an edition
 
 Write a directory. The server picks it up on the next request — no restart, no
@@ -189,10 +201,10 @@ cannot reliably know. **Full specification: [`docs/FORMAT.md`](docs/FORMAT.md).*
 | `VAEL_PAPER_EDITIONS` | Directory of editions | `./editions` |
 | `VAEL_PAPER_READER` | Built reader bundle | `./reader/dist` |
 
-Ports were chosen to sit clear of a typical Vaelkeep host: Vaelkeep `8787`,
-Ollama `11434`, Obsidian's REST plugin `27124`, Docker Desktop
-`80/443/3001/8000/9000`, and a Vite dev server on `5173`. This project uses
-**`8791`** for the API and **`5174`** for its own dev server.
+The defaults sit clear of the ports commonly taken on a development machine —
+`80`, `443`, `3000`, `5173`, `8000`, `8080` — so it can usually be started
+without moving anything else. It uses **`8791`** for the API and **`5174`** for
+its own dev server; set `VAEL_PAPER_PORT` if either clashes.
 
 ## 🏗️ Architecture
 
@@ -254,9 +266,9 @@ symptoms that look like something else entirely.
 
 ## 🔮 Roadmap
 
-- [ ] A nightly generator, as a Vaelkeep cron job over the existing RSS pipeline
+- [ ] A nightly generator — a scheduled job that summarises feeds into an edition
 - [ ] Front-page template matcher — named areas, a rail, teasers
-- [ ] Ship the four API endpoints as a Vaelkeep plugin capability
+- [ ] Package the four API endpoints as a plugin for a wider agent host
 - [ ] Offline caching via a service worker
 - [ ] Repeated column headers on a continued table
 

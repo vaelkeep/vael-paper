@@ -1,10 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  The Vael Paper server.
+  The Vael Paper server, as a macOS launchd agent.
 
-  Modelled on com.coreautomation.vaelkeep.server.plist. Install with:
-    cp launchd/com.coreautomation.vaelpaper.plist ~/Library/LaunchAgents/
-    launchctl load ~/Library/LaunchAgents/com.coreautomation.vaelpaper.plist
+  This is a TEMPLATE. launchd requires absolute paths and does not expand ~ or
+  $HOME, so the four __VAEL_PAPER__ and __UV__ placeholders below must be
+  substituted before the file will load. From the repository root:
+
+      sed -e "s|__VAEL_PAPER__|$PWD|g" \
+          -e "s|__UV__|$(command -v uv)|g" \
+          launchd/com.coreautomation.vaelpaper.plist \
+          > ~/Library/LaunchAgents/com.coreautomation.vaelpaper.plist
+
+      mkdir -p data/logs
+      launchctl load ~/Library/LaunchAgents/com.coreautomation.vaelpaper.plist
+
+  To stop it:
+
+      launchctl unload ~/Library/LaunchAgents/com.coreautomation.vaelpaper.plist
 -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -15,22 +27,22 @@
 
   <key>ProgramArguments</key>
   <array>
-    <string>/Users/rodmoore/.local/bin/uv</string>
+    <string>__UV__</string>
     <string>run</string>
     <string>vael-paper</string>
   </array>
 
   <key>WorkingDirectory</key>
-  <string>/Users/rodmoore/Data/dev/vael-paper/server</string>
+  <string>__VAEL_PAPER__/server</string>
 
   <key>EnvironmentVariables</key>
   <dict>
     <key>VAEL_PAPER_PORT</key>
     <string>8791</string>
     <key>VAEL_PAPER_EDITIONS</key>
-    <string>/Users/rodmoore/Data/dev/vael-paper/editions</string>
+    <string>__VAEL_PAPER__/editions</string>
     <key>VAEL_PAPER_READER</key>
-    <string>/Users/rodmoore/Data/dev/vael-paper/reader/dist</string>
+    <string>__VAEL_PAPER__/reader/dist</string>
   </dict>
 
   <key>RunAtLoad</key>
@@ -41,8 +53,8 @@
   <integer>30</integer>
 
   <key>StandardOutPath</key>
-  <string>/Users/rodmoore/Data/dev/vael-paper/data/logs/vael-paper.log</string>
+  <string>__VAEL_PAPER__/data/logs/vael-paper.log</string>
   <key>StandardErrorPath</key>
-  <string>/Users/rodmoore/Data/dev/vael-paper/data/logs/vael-paper.err.log</string>
+  <string>__VAEL_PAPER__/data/logs/vael-paper.err.log</string>
 </dict>
 </plist>

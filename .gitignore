@@ -9,6 +9,9 @@ reader/dist/
 __pycache__/
 *.egg-info/
 
+# Runtime logs, written by the launchd agent.
+data/
+
 # macOS
 .DS_Store
 

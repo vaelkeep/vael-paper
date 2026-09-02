@@ -1,12 +1,15 @@
 ---
 id: 10-the-figures
 headline: The Figures
-deck: Close of business, Tuesday
+deck: Close of business, Tuesday — figures are fictional
 section: figures
 byline: The Vael Desk
 priority: 4
 span: 2col
 ---
+
+**Every figure on this page is invented.** This is sample content for a layout
+engine, not market data; the companies do not exist and the levels are not real.
 
 Compiled at the close. Changes are against the previous session unless noted.
 Where a market was shut, the last traded level is carried forward and marked.

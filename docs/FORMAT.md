@@ -4,7 +4,7 @@ This is the contract between whatever writes the paper and the reader that
 prints it. Get this right and everything else is replaceable.
 
 The reader never talks to a generator. It reads a directory. Anything that can
-write markdown into that directory — a nightly Vaelkeep cron job, a shell
+write markdown into that directory — a nightly cron job, a shell
 script, you with a text editor — can publish an edition.
 
 ## Shape
@@ -213,6 +213,11 @@ bad field costs that field rather than the article.
 
 `editions/2026-09-02/articles/08-broken.md` exists precisely to exercise this
 path, and should be kept broken.
+
+The whole sample edition is fiction, written to exercise the engine: a story
+long enough to force a continuation, a table longer than a column, images at
+three different aspect ratios, and that one unparseable file. The market
+figures in particular are invented, and the companies do not exist.
 
 ## Publishing a new edition
 
