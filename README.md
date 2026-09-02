@@ -28,8 +28,10 @@ around wherever you were reading.*
 - **Never loses your place.** Rotate the iPad or change the text size and you
   stay on the same sentence, because the reader addresses articles rather than
   page numbers.
-- **Reads on anything.** Two-page spreads on a desktop, single pages on a
-  tablet, continuous scroll on a phone — chosen automatically, overridable.
+- **Fits phone, tablet and desktop.** The same edition becomes a two-page
+  spread on a desktop, a single page on a tablet, and a continuous scroll on a
+  phone — the layout is recomputed for the screen it lands on, not squeezed
+  into breakpoints.
 - **Easy on the eyes.** Warm off-white ground, sepia and night grounds, six text
   sizes, and photographs printed as ink rather than pasted on.
 - **Nothing to break at 4am.** A malformed article or a missing image becomes a
@@ -113,6 +115,28 @@ or over Tailscale.
 | Full screen | `⛶`, or press `f` |
 
 On an iPad, **Add to Home Screen** runs it full-screen with no browser chrome.
+
+### On every screen
+
+There is one edition and no separate mobile version. The reader measures the
+screen it is on and lays the same content out to suit it — the number of pages
+shown, the number of columns, and whether it pages at all are all decided at
+read time.
+
+| Screen | Reads as | Columns | Line length |
+|---|---|---|---|
+| Phone, portrait | continuous scroll | 1 | ~41 characters |
+| Tablet, portrait | a single page | 2 | ~43 characters |
+| Tablet, landscape | a two-page spread | 1 per page | ~56–62 characters |
+| Laptop / desktop | a two-page spread | 2 per page | ~39–43 characters |
+| Ultrawide, full screen | a two-page spread | 3 per page | ~64 characters |
+
+Phones scroll rather than page because at that width a "page" holds about
+sixteen lines, which turns a short article into a dozen flips. That is a
+default, not a rule — the mode button overrides it in either direction.
+
+Rotating a tablet or changing the text size re-lays the whole edition and puts
+you back on the sentence you were reading.
 
 Links are canonical on the article, so they survive a change of device:
 
