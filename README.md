@@ -15,6 +15,7 @@ around wherever you were reading.*
 ![TypeScript](https://img.shields.io/badge/typescript-strict-3178C6?logo=typescript&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-83%20passing-success)
 ![Status](https://img.shields.io/badge/status-working%20prototype-blue)
+[![License: MIT](https://img.shields.io/badge/license-MIT-informational)](LICENSE)
 
 ## ✨ Highlights
 
@@ -237,11 +238,13 @@ symptoms that look like something else entirely.
 
 ## 📜 License
 
-Not yet licensed. All rights reserved by the author for now — if you want this
-to be open source, add a `LICENSE` file.
+[MIT](LICENSE) — do what you like with it, keep the copyright notice.
 
-The bundled fonts are third-party and separately licensed under the SIL Open
-Font License 1.1, which permits this redistribution; see
+© 2026 Rod Moore
+
+The MIT licence covers this project's own code. The bundled fonts under
+`reader/src/fonts/` are third-party works redistributed under the SIL Open Font
+License 1.1, which permits it; see
 [`reader/src/fonts/README.md`](reader/src/fonts/README.md).
 
 ## 🙏 Acknowledgements

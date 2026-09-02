@@ -1,0 +1,41 @@
+MIT License
+
+Copyright (c) 2026 Rod Moore
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+THIRD-PARTY ASSETS
+
+The MIT licence above covers this project's own source code and documentation.
+It does not extend to the fonts bundled under `reader/src/fonts/`, which are
+third-party works redistributed under their own terms:
+
+  Source Serif 4   Copyright 2014-2023 Adobe (https://adobe.com/), with
+                   Reserved Font Name 'Source'.
+                   SIL Open Font License, Version 1.1.
+
+  Playfair Display Copyright 2017 The Playfair Display Project Authors
+                   (https://github.com/clauseggers/Playfair-Display).
+                   SIL Open Font License, Version 1.1.
+
+The OFL permits this redistribution, including bundling with an application.
+See `reader/src/fonts/README.md`. The full licence text is available at
+https://openfontlicense.org.
