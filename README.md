@@ -1,10 +1,16 @@
 # The Vael Paper 📰
 
-Your own daily newspaper — generated overnight, read like print.
+Your own daily newspaper, no bias, no ads: written overnight from your
+calendar, budget, feeds and notes, and printed like a real broadsheet.
 
-**[▶ Try it now](https://vaelkeep.github.io/vael-paper/)** — a demo edition,
-live. Turn pages with the arrow keys, resize the window, change the text size,
-and press **Source** in the corner to see the markdown behind any page.
+*The Vael Paper* is the press. The paper it prints is yours, under your own
+name: the demo below is one reader's, *The John Smith Daily*, and the
+masthead comes from a single line in `paper.json`.
+
+**[▶ Try it now](https://vaelkeep.github.io/vael-paper/)** — the demo
+edition, live. Turn pages with the arrow keys, resize the window, change the
+text size, and press **Source** in the corner to see the markdown behind any
+page.
 
 ![The front page and page two of a demo edition, shown as a two-page spread](docs/front-page.png)
 
