@@ -8,6 +8,8 @@ and press **Source** in the corner to see the markdown behind any page.
 
 ![The front page and page two of a demo edition, shown as a two-page spread](docs/front-page.png)
 
+![Turning the pages of the demo edition](docs/page-turn.gif)
+
 *The opening spread of the demo edition, at the default text size. Nothing
 here is a mockup: the column count is chosen from the measure, the drop caps are
 sized from the font's own cap-height, and both stories break to "continued on"
@@ -181,6 +183,35 @@ http://localhost:8791/#/2026-09-02/p4                    ← resolved, then rewr
 > `.example` domain. `editions/2026-09-02/` is the engineering fixture: long
 > articles that force continuations, a table that must break across columns, a
 > deliberately malformed file. None of it is reporting.
+
+## ⏱️ Make your own in five minutes
+
+```bash
+git clone https://github.com/vaelkeep/vael-paper && cd vael-paper
+npm --prefix reader install && npm --prefix reader run build
+cd server && uv sync && uv run vael-paper --port 8791
+```
+
+Open http://localhost:8791 — that is the demo edition. Now make it yours:
+
+1. Edit `editions/paper.json`: your masthead, your motto, today's date as
+   `founded`, and the sections you want in the order you want them.
+2. Make a folder for tomorrow, `editions/2026-09-05/articles/`, and put one
+   file in it:
+
+   ```markdown
+   # The First Edition
+
+   *Written by hand, printed by the paper*
+
+   Everything from here on is the body. Tomorrow a script writes this file.
+   ```
+
+3. Reload. The paper picks the folder up on the next request. Press
+   **Source** in the corner to see the file behind the page.
+4. Run `uv run vael-paper-check` from `server/` to see what a generator would
+   be told to fix, then read [`docs/GENERATING.md`](docs/GENERATING.md) for
+   how to have a model write it every night.
 
 ## 📰 Publishing an edition
 

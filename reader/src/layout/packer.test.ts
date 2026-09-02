@@ -131,11 +131,19 @@ describe('packColumn', () => {
     expect(r.usedLines).toBe(4);
   });
 
-  it('force-places an atomic block taller than an empty column', () => {
+  it('crops a figure taller than an empty column to the column', () => {
     const led = ledger([{ lines: 40, atomic: true, kind: 'figure', leadLines: 0 }]);
     const r = packColumn(20, cursorAt('a'), led, {});
-    expect(r.overflowed).toBe(true);
+    expect(r.slice?.fitted).toBe(true);
+    expect(r.usedLines).toBe(20);
     expect(r.finished).toBe(true); // and crucially, it made progress
+  });
+
+  it('force-places any other atomic block taller than an empty column', () => {
+    const led = ledger([{ lines: 40, atomic: true, kind: 'pullquote', leadLines: 0 }]);
+    const r = packColumn(20, cursorAt('a'), led, {});
+    expect(r.overflowed).toBe(true);
+    expect(r.finished).toBe(true);
   });
 
   it('reserves a line for the jump slug only while the story continues', () => {
@@ -254,7 +262,7 @@ describe('keep-with-previous', () => {
 
 describe('the oversized-block escape hatch', () => {
   const oversized = (): LineLedger =>
-    ledger([{ lines: 40, atomic: true, kind: 'figure', leadLines: 0 }]);
+    ledger([{ lines: 40, atomic: true, kind: 'pullquote', leadLines: 0 }]);
 
   it('force-places into an empty column so the planner cannot deadlock', () => {
     const r = packColumn(20, cursorAt('a'), oversized(), { columnIsEmpty: true });
@@ -341,5 +349,45 @@ describe('tables that continue repeat their heading', () => {
     }
     expect(rows).toBe(12);
     expect(headings).toBeGreaterThan(0);
+  });
+});
+
+
+describe('a figure taller than the column that opens it', () => {
+  it('is cropped to the column instead of overrunning the jump line', () => {
+    const led = ledger([
+      { kind: 'figure', lines: 12, atomic: true },
+      { lines: 20 },
+    ]);
+    const r = packColumn(11, cursorAt('a'), led, { isPageFinalColumn: true });
+    // Ten lines of column, one reserved for the jump: the plate takes ten.
+    expect(r.usedLines).toBe(10);
+    expect(r.slice?.fitted).toBe(true);
+    expect(r.overflowed).toBe(false);
+    expect(r.cursor).toEqual({ articleId: 'a', blockIndex: 1, lineIndex: 0 });
+  });
+
+  it('a pull quote that cannot fit still overflows, as before', () => {
+    const led = ledger([{ kind: 'pullquote', lines: 12, atomic: true }]);
+    const r = packColumn(8, cursorAt('a'), led);
+    expect(r.overflowed).toBe(true);
+    expect(r.slice?.fitted).toBeUndefined();
+  });
+});
+
+
+describe('a table never opens a column with only its heading', () => {
+  it('moves whole when fewer than two rows would fit under the heading', () => {
+    const led = ledger([{ lines: 5 }, { kind: 'table', lines: 10, head: { lines: 1, bodyStart: 2 } }]);
+    // 5 lines of paragraph, a lead, then room for label + heading + one row.
+    const r = packColumn(9, cursorAt('a'), led);
+    expect(r.cursor).toEqual({ articleId: 'a', blockIndex: 1, lineIndex: 0 });
+    expect(r.usedLines).toBe(5);
+  });
+
+  it('starts the table when two rows fit', () => {
+    const led = ledger([{ lines: 5 }, { kind: 'table', lines: 10, head: { lines: 1, bodyStart: 2 } }]);
+    const r = packColumn(10, cursorAt('a'), led);
+    expect(r.cursor.lineIndex).toBe(4);
   });
 });

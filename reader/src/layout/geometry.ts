@@ -26,9 +26,9 @@ const WIDTH_QUANTUM = 4;
  * lines. `MAX` is where the eye starts losing its place returning to the next
  * line — the reason a very wide window should grow *columns*, not lines.
  */
-const IDEAL_COLUMN_CHARS = 62;
+const IDEAL_COLUMN_CHARS = 56;
 const MIN_COLUMN_CHARS = 34;
-const MAX_COLUMN_CHARS = 75;
+const MAX_COLUMN_CHARS = 68;
 
 /** Source Serif 4 averages close to this per character at text sizes. */
 const AVG_CHAR_EM = 0.49;

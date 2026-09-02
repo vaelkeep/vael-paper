@@ -280,6 +280,23 @@
   margin: 0;
 }
 
+/* A plate cropped to the column that opens it: the caption keeps its lines,
+   the frame takes what is left. See packer.ts, the atomic escape hatch. */
+.figure--fitted {
+  display: flex;
+  flex-direction: column;
+}
+
+.figure--fitted .figure__frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;
+}
+
+.figure--fitted .figure__caption {
+  flex: none;
+}
+
 .figure__frame {
   display: block;
   width: 100%;
@@ -310,6 +327,14 @@
      against both photographs and line art; it improves both. */
   filter: grayscale(1) contrast(1.45) brightness(1.08);
   mix-blend-mode: multiply;
+}
+
+/* A plate is drawn to be read whole: labels along its foot, values at its
+   head. When its frame is shorter than its shape it is letterboxed, never
+   cropped. A photograph is cropped, held by its focus. */
+.figure img[data-tone='plate'] {
+  object-fit: contain;
+  object-position: 50% 50%;
 }
 
 .figure img[data-focus='top'] {

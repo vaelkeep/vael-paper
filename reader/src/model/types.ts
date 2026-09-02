@@ -229,6 +229,11 @@ export interface SliceRef {
   isArticleEnd: boolean;
   /** Baselines of repeated table heading drawn above the slice's first line. */
   headLines?: number;
+  /**
+   * The slice is a single figure taller than the column it opens, cropped to
+   * the column's height rather than allowed to overrun the jump line.
+   */
+  fitted?: boolean;
 }
 
 export interface ColumnFill {

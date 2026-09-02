@@ -104,6 +104,14 @@ function sliceNode(
     if (node) ribbon.append(node.cloneNode(true));
   }
 
+  if (slice.fitted) {
+    const figure = ribbon.firstElementChild as HTMLElement | null;
+    if (figure) {
+      figure.classList.add('figure--fitted');
+      figure.style.height = `${slice.heightLines * lh}px`;
+    }
+  }
+
   window_.append(ribbon);
   return window_;
 }

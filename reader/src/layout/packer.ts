@@ -99,6 +99,7 @@ export function packColumn(
   let used = 0;
   let emitted = 0;
   let overflowed = false;
+  let fitted = false;
   // The escape hatch may only fire into a genuinely empty column; otherwise it
   // would overrun a budget already partly spent by an earlier call.
   const canOverrun = options.columnIsEmpty !== false;
@@ -123,6 +124,17 @@ export function packColumn(
     if (block.atomic) {
       if (lead + block.lines > remaining) {
         if (canOverrun && emitted === 0 && block.lines > budget) {
+          if (block.kind === 'figure' && budget >= 3) {
+            // A plate taller than the column that opens it — the usual case
+            // being the front-page lead, whose band is short. Crop it to the
+            // column rather than let it run over the jump line; the renderer
+            // gives the frame whatever the caption leaves.
+            used += budget;
+            emitted += 1;
+            fitted = true;
+            cursor = { ...cursor, blockIndex: cursor.blockIndex + 1, lineIndex: 0 };
+            break;
+          }
           // Larger than an entire empty column. Place it anyway; the column
           // clips it. Refusing would deadlock the planner on this cursor.
           used += block.lines;
@@ -150,6 +162,18 @@ export function packColumn(
 
     if (take > 0 && rest > 0 && take < ORPHAN_MIN) {
       take = 0; // too few lines to strand at the foot
+      rest = availableInBlock;
+    }
+    // A table's label and heading with no rows beneath them is a heading
+    // stranded at the foot; the rows must come along or the table moves.
+    if (
+      block.head &&
+      cursor.lineIndex === 0 &&
+      take > 0 &&
+      rest > 0 &&
+      take < block.head.bodyStart + ORPHAN_MIN
+    ) {
+      take = 0;
       rest = availableInBlock;
     }
     if (take > 0 && rest > 0 && rest < WIDOW_MIN) {
@@ -219,6 +243,7 @@ export function packColumn(
     isArticleStart: from.blockIndex === 0 && from.lineIndex === 0,
     isArticleEnd: finished,
     ...(headLines > 0 ? { headLines } : {}),
+    ...(fitted ? { fitted: true } : {}),
   };
 
   return { cursor, slice, usedLines: used, finished, overflowed };
