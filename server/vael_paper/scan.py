@@ -424,7 +424,9 @@ def scan_edition(edition_dir: Path, base_url: str = "") -> Edition:
         asset = probe_image(
             edition_dir / key,
             key,
-            f"{base_url}/editions/{edition_id}/{key}",
+            # Relative on purpose: resolved against wherever the reader is
+            # mounted, which is the root on the server and a subpath on Pages.
+            f"{base_url}editions/{edition_id}/{key}",
             f"article:{article.id}",
             ctx,
         )

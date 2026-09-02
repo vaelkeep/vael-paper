@@ -43,6 +43,27 @@ def test_latest_resolves_to_the_newest_edition(client: TestClient) -> None:
     assert latest["id"] == newest
 
 
+def test_the_json_suffixed_paths_the_reader_uses_answer_identically(client: TestClient) -> None:
+    """The reader requests `.json` paths so the same bundle works on a static
+    host; the server must answer them exactly as it answers the bare ones."""
+    assert client.get("/api/editions.json").json() == client.get("/api/editions").json()
+    assert (
+        client.get("/api/editions/latest.json").json()
+        == client.get("/api/editions/latest").json()
+    )
+    assert (
+        client.get("/api/editions/2026-09-02.json").json()
+        == client.get("/api/editions/2026-09-02").json()
+    )
+
+
+def test_image_paths_are_relative_so_they_work_under_a_subpath(client: TestClient) -> None:
+    edition = client.get("/api/editions/2026-09-02").json()
+    for asset in edition["images"].values():
+        assert not asset["src"].startswith("/"), asset["src"]
+        assert asset["src"].startswith("editions/")
+
+
 def test_an_edition_carries_everything_the_reader_needs(client: TestClient) -> None:
     edition = client.get("/api/editions/2026-09-02").json()
     assert {"sections", "articles", "images", "warnings"} <= edition.keys()

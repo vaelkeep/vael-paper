@@ -12,6 +12,9 @@ __pycache__/
 # Runtime logs, written by the launchd agent.
 data/
 
+# The static export. Built by CI on every push; never committed.
+site/
+
 # macOS
 .DS_Store
 

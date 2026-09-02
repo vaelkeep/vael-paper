@@ -103,18 +103,25 @@ def create_app(
             "editions": len(list_edition_dirs(root)),
         }
 
+    # Each route is registered under two paths. The bare form is the natural
+    # API; the .json form is what the reader requests, because on a static
+    # host `api/editions` cannot be both a file and a directory.
     @app.get("/api/editions")
+    @app.get("/api/editions.json")
     def index() -> list[dict]:
         """The archive, newest first."""
         return [summarize(cache.get(d.name)).model_dump() for d in list_edition_dirs(root)]
 
     @app.get("/api/editions/latest")
+    @app.get("/api/editions/latest.json")
     def latest() -> JSONResponse:
         return JSONResponse(cache.get(cache.latest_id()).model_dump_wire())
 
     @app.get("/api/editions/{edition_id}")
     def one(edition_id: str) -> JSONResponse:
-        return JSONResponse(cache.get(edition_id).model_dump_wire())
+        # A path parameter matches `2026-09-02.json` whole, so the suffix is
+        # handled here rather than as a second route that would never be hit.
+        return JSONResponse(cache.get(edition_id.removesuffix(".json")).model_dump_wire())
 
     if root.is_dir():
         app.mount("/editions", StaticFiles(directory=root), name="editions")

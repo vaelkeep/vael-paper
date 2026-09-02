@@ -1,0 +1,75 @@
+name: Pages
+
+# Publish the sample edition as a static site on GitHub Pages.
+#
+# Every response the server produces is a pure function of the files on disk,
+# so the whole thing is exported ahead of time and served with no Python
+# running anywhere. See server/vael_paper/export.py.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time, and never cancel a deploy mid-flight: a half-published
+# site is worse than a slightly stale one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Export
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: reader/package-lock.json
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: server/uv.lock
+
+      - name: Build the reader
+        working-directory: reader
+        run: npm ci && npm run build
+
+      - name: Export the site
+        working-directory: server
+        run: |
+          uv sync --locked
+          uv run vael-paper-export --out ../site
+
+      - name: The export is complete
+        run: |
+          test -f site/index.html
+          test -f site/api/editions.json
+          test -f site/api/editions/latest.json
+          test -f site/.nojekyll
+          ls site/editions/*/images/*.png >/dev/null
+          echo "ok: $(find site -type f | wc -l) files"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

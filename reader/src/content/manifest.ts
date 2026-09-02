@@ -31,12 +31,24 @@ async function getJson<T>(url: string): Promise<T> {
   return (await res.json()) as T;
 }
 
+/**
+ * The paths are relative and end in `.json`, and both choices are deliberate.
+ *
+ * Relative, because the reader is served from the FastAPI root in one
+ * deployment and from a subpath (`/vael-paper/`) on GitHub Pages in another,
+ * and a leading slash would break the second. Hash routing keeps the document
+ * URL at the mount point, so these resolve correctly from any deep link.
+ *
+ * `.json`, because on a static host `api/editions` cannot be both a file (the
+ * index) and a directory (holding `latest` and each edition). The server
+ * answers these same paths, so one reader serves both.
+ */
 export function fetchArchive(): Promise<EditionSummary[]> {
-  return getJson<EditionSummary[]>('/api/editions');
+  return getJson<EditionSummary[]>('api/editions.json');
 }
 
 export async function fetchEdition(id = 'latest'): Promise<Edition> {
-  return prepare(await getJson<EditionManifest>(`/api/editions/${id}`));
+  return prepare(await getJson<EditionManifest>(`api/editions/${id}.json`));
 }
 
 export function prepare(manifest: EditionManifest): Edition {

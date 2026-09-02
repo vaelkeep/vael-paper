@@ -2,6 +2,9 @@
 
 Your own daily newspaper — generated overnight, read like print.
 
+**[▶ Try it now](https://vaelkeep.github.io/vael-paper/)** — the sample edition,
+live. Turn pages with the arrow keys, resize the window, change the text size.
+
 ![The front page and page two of a sample edition, shown as a two-page spread](docs/front-page.png)
 
 *The opening spread of the sample edition, at the default text size. Nothing
@@ -108,6 +111,21 @@ launchctl load ~/Library/LaunchAgents/com.coreautomation.vaelpaper.plist
 
 The server binds `0.0.0.0`, so it is reachable from a tablet on the same
 network, or over a private network such as Tailscale.
+
+### Publish it as a static site
+
+Every response the server produces is a pure function of the files on disk, so
+the whole paper can be exported and served with no Python running anywhere:
+
+```bash
+npm --prefix reader run build
+cd server && uv run vael-paper-export --out ../site
+```
+
+`site/` is a complete static site — the reader, the API pre-rendered as JSON,
+and the images — that works at a domain root or under a subpath. The
+[`Pages` workflow](.github/workflows/pages.yml) does exactly this on every push
+to `main` and is what serves the **Try it now** link above.
 
 ## 💡 Usage
 
