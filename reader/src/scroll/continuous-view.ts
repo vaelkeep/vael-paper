@@ -127,6 +127,38 @@ export function renderContinuous(
   );
   for (const { node } of blockNodes) observer.observe(node);
 
+  // There are no pages here, but the arrow keys should still move the reader
+  // through the paper rather than do nothing: a screenful at a time, the way
+  // Page Down does, so the same keys mean "forward" and "back" in both modes.
+  const onKey = (e: KeyboardEvent) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const target = e.target as HTMLElement | null;
+    if (target && /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+    const step = window.innerHeight * 0.9;
+    switch (e.key) {
+      case 'ArrowRight':
+      case 'PageDown':
+      case ' ':
+        e.preventDefault();
+        window.scrollBy({ top: step, behavior: 'smooth' });
+        break;
+      case 'ArrowLeft':
+      case 'PageUp':
+        e.preventDefault();
+        window.scrollBy({ top: -step, behavior: 'smooth' });
+        break;
+      case 'Home':
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        break;
+      case 'End':
+        e.preventDefault();
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        break;
+    }
+  };
+  window.addEventListener('keydown', onKey);
+
   return {
     anchor: () => current,
     goTo(cursor) {
@@ -140,6 +172,7 @@ export function renderContinuous(
     },
     destroy() {
       observer.disconnect();
+      window.removeEventListener('keydown', onKey);
     },
   };
 }

@@ -150,6 +150,20 @@ describe('measure on real devices', () => {
     expect(chooseMode({ w: 390, h: 844 })).toBe('scroll');
   });
 
+  it('keeps a short-but-wide desktop window paged', () => {
+    // A 1420×617 browser window is not a phone. An earlier rule keyed on the
+    // shorter edge and dropped it into scroll mode, where the arrow keys are
+    // dead and the reader looks broken. Width is what governs readability.
+    expect(chooseMode({ w: 1420, h: 617 })).toBe('spread');
+    expect(chooseMode({ w: 1000, h: 500 })).toBe('spread');
+    expect(chooseMode({ w: 800, h: 600 })).toBe('spread');
+  });
+
+  it('scrolls only when the width is a phone\'s', () => {
+    expect(chooseMode({ w: 699, h: 2000 })).toBe('scroll');
+    expect(chooseMode({ w: 700, h: 2000 })).not.toBe('scroll');
+  });
+
   it('holds a readable measure at every text size on every device', () => {
     for (const { w, h } of DEVICES) {
       for (const scale of [0.85, 0.92, 1, 1.09, 1.2, 1.32]) {

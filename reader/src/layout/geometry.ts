@@ -50,8 +50,18 @@ const MAX_FIGURE_SHARE = 0.42;
 export const FONT_SCALES = [0.85, 0.92, 1, 1.09, 1.2, 1.32] as const;
 export const DEFAULT_SCALE_INDEX = 2;
 
-/** Below this, pagination stops being a good idea. See the plan's phone note. */
-export const PAGINATION_MIN_EDGE = 700;
+/**
+ * Narrower than this, pagination stops being a good idea and the reader
+ * scrolls instead.
+ *
+ * It is a *width* threshold, deliberately. The reason a phone should scroll is
+ * that at a ~340px measure a page holds about sixteen lines, so a story
+ * becomes a dozen flips — and that is a function of width alone. Keying on the
+ * shorter edge, as an earlier version did, also caught a short-but-wide
+ * desktop window and silently dropped it into scroll mode, where the arrow
+ * keys do nothing and the reader looks broken.
+ */
+export const PAGINATION_MIN_WIDTH = 700;
 
 export interface ViewportInfo {
   w: number;
@@ -81,7 +91,7 @@ export function applyRhythm(fontScale: number): { fontSize: number; lineHeight: 
 
 export function chooseMode(view: ViewportInfo): ReadingMode {
   if (view.modeOverride) return view.modeOverride;
-  if (Math.min(view.w, view.h) < PAGINATION_MIN_EDGE) return 'scroll';
+  if (view.w < PAGINATION_MIN_WIDTH) return 'scroll';
   return view.w >= view.h * 1.15 ? 'spread' : 'single';
 }
 

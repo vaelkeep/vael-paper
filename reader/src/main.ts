@@ -17,7 +17,7 @@ import './styles/page.css';
 import './styles/overlay.css';
 
 import { fetchArchive, fetchEdition, type Edition } from './content/manifest';
-import { applyRhythm, chooseMode, PAGINATION_MIN_EDGE } from './layout/geometry';
+import { applyRhythm, chooseMode, PAGINATION_MIN_WIDTH } from './layout/geometry';
 import { Paginator } from './layout/paginator';
 import type { EditionPlan } from './layout/planner';
 import type { Cursor, EditionSummary, ReadingMode } from './model/types';
@@ -448,4 +448,4 @@ class Reader {
 void new Reader().start();
 
 // Referenced so the constant documents itself in one place.
-export { PAGINATION_MIN_EDGE };
+export { PAGINATION_MIN_WIDTH };
