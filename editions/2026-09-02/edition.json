@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "date": "2026-09-02",
+  "volume": 1,
+  "number": 214,
+  "masthead": "The Vael Paper",
+  "motto": "Printed nightly, for one reader",
+  "generated_at": "2026-09-02T04:12:00-04:00",
+  "front_template": null,
+  "sections": [
+    {
+      "id": "markets",
+      "name": "Markets",
+      "articles": [
+        "01-markets-slip",
+        "05-copper"
+      ]
+    },
+    {
+      "id": "figures",
+      "name": "The Figures",
+      "articles": [
+        "10-the-figures"
+      ]
+    },
+    {
+      "id": "comment",
+      "name": "Comment",
+      "articles": [
+        "02-on-quiet-machines",
+        "06-letters"
+      ]
+    },
+    {
+      "id": "science",
+      "name": "Science",
+      "articles": [
+        "04-orbital-debris",
+        "08-broken"
+      ]
+    },
+    {
+      "id": "wires",
+      "name": "From the Wires",
+      "articles": [
+        "11-wires-grid",
+        "12-wires-shipping"
+      ]
+    },
+    {
+      "id": "weather",
+      "name": "Weather",
+      "articles": [
+        "03-weather"
+      ]
+    },
+    {
+      "id": "arts",
+      "name": "Arts",
+      "articles": [
+        "07-catalogue"
+      ]
+    },
+    {
+      "id": "household",
+      "name": "Household",
+      "articles": [
+        "09-marmalade"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,619 @@
+/*
+ * Broadsheet typography.
+ *
+ * THE RHYTHM RULE, which the paginator depends on absolutely:
+ * vertical space is expressed *only* as `margin-block-start`, only via the
+ * `.ribbon > * + *` selector, and only in integer multiples of `--lh`. Never
+ * `margin-block-end`, never a bare margin on a child. `BlockMetrics.leadLines`
+ * assumes exactly this; break the rule and every slice drifts by one lead per
+ * column, which presents as a phantom off-by-one in the packer.
+ */
+
+/* ------------------------------------------------------------------ masthead */
+
+.masthead {
+  text-align: center;
+  padding-block: calc(var(--lh) * 0.75) 0;
+}
+
+.masthead__name {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: var(--fs-masthead);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--ink);
+  /* Playfair's descenders are long; without this the 'p' of "Paper" sits on
+     the rule below. Trimming the leading half and re-adding it as padding
+     keeps the optical gap even while the cap-height stays put. */
+  padding-block-end: 0.12em;
+}
+
+/* The classic thick-over-thin pair. Drawn as borders on one element so the
+   pair can never separate across a page break. */
+.masthead__rules {
+  border-top: 3px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  height: 4px;
+  margin-block-start: calc(var(--lh) * 0.6);
+}
+
+.masthead__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1em;
+  font-size: var(--fs-small);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.11em;
+  color: var(--ink-soft);
+  padding-block: calc(var(--lh) * 0.35);
+  border-bottom: 1px solid var(--ink);
+}
+
+.masthead__motto {
+  font-variant-caps: normal;
+  font-style: italic;
+  letter-spacing: 0;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------ sections */
+
+.section-rule {
+  display: flex;
+  align-items: center;
+  gap: 0.9em;
+  margin-block-start: calc(var(--lh) * 1.5);
+  border-bottom: 2px solid var(--ink);
+  padding-block-end: calc(var(--lh) * 0.2);
+}
+
+.section-rule__name {
+  font-family: var(--font-display);
+  font-size: var(--fs-headline-sm);
+  font-weight: 700;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.14em;
+  line-height: 1;
+}
+
+.section-rule__fill {
+  flex: 1;
+  border-top: 1px solid var(--rule);
+}
+
+/* ------------------------------------------------------------------ headlines */
+
+.headline {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -0.012em;
+  margin: 0;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.headline--lead {
+  font-size: var(--fs-headline-lead);
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+.headline--full {
+  font-size: var(--fs-headline);
+}
+.headline--2col {
+  font-size: var(--fs-headline);
+}
+.headline--1col {
+  font-size: var(--fs-headline-sm);
+}
+
+.deck {
+  font-family: var(--font-text);
+  font-style: italic;
+  font-size: var(--fs-deck);
+  font-weight: 400;
+  line-height: 1.28;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.ribbon .headline--lead + .deck,
+.ribbon .headline--lead + .deck.no-justify {
+  text-align: center;
+  max-inline-size: 34em;
+  margin-inline: auto;
+}
+
+.byline {
+  font-size: var(--fs-small);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+  border-block: 1px solid var(--rule-hair);
+  padding-block: calc(var(--lh) * 0.18);
+}
+
+.headline--lead ~ .byline {
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ body */
+
+.ribbon {
+  display: flow-root; /* contain margins — see THE RHYTHM RULE above */
+  font-size: var(--fs-body);
+  line-height: var(--lh);
+}
+
+.ribbon > * {
+  margin: 0;
+}
+
+.ribbon > * + * {
+  margin-block-start: var(--lh);
+}
+
+/* Tighter pairings, still whole baseline units. */
+.ribbon > .headline + .deck,
+.ribbon > .deck + .byline,
+.ribbon > .headline + .byline {
+  margin-block-start: calc(var(--lh) * 0.5);
+}
+
+/* The first block of a slice must not carry its lead — the column above
+   already charged it. Set by render/slice.ts. */
+.ribbon.slice-head > *:first-child {
+  margin-block-start: 0 !important;
+}
+
+.ribbon p {
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  hyphenate-limit-chars: 6 3 3;
+  text-wrap: pretty;
+  orphans: 2;
+  widows: 2;
+}
+
+.ribbon p.no-justify {
+  text-align: left;
+  hyphens: none;
+}
+
+/* Drop cap: three baselines tall, optically nudged. `::first-letter` is the
+   only mechanism that keeps the paragraph a single unbroken box, which the
+   slice-and-clip renderer requires.
+   
+   PHYSICAL properties only. Browsers restrict `::first-letter` to a limited
+   set, and the logical forms are not reliably honoured on it — Chrome computes
+   `padding-inline-end` to 0, which silently leaves a letter like "T", whose
+   crossbar reaches the glyph edge, touching the text beside it. */
+.ribbon p.drop-cap::first-letter {
+  float: left;
+  font-family: var(--font-display);
+  font-weight: 900;
+  /* Sized from the face's real cap-height by layout/dropcap.ts, so the letter
+     spans exactly from line one's cap-height to line three's baseline. The
+     fallbacks are only for the moment before the fonts resolve; `3 × --lh` is
+     visibly short, because a cap-height is ~0.72 of the em, not 1.0. */
+  font-size: var(--drop-cap-size, calc(var(--lh) * 3));
+  line-height: var(--drop-cap-lh, calc(var(--lh) * 2.62));
+  /* A touch over a word space at cap size. Enough to clear a "T" crossbar
+     without stranding a rounder letter like "O" out on its own. */
+  padding-right: 0.1em;
+  color: var(--ink);
+  /* NO negative left margin, however tempting. The optical nudge a drop cap
+     usually wants would push the glyph outside the column, and a column is
+     `overflow: hidden` with `contain: strict` because that clipping is how
+     slices are rendered. A letter with a small left sidebearing (T, W) absorbs
+     the shift invisibly; a round one (C, O, G) gets its bowl sliced flat. */
+}
+
+.ribbon ul,
+.ribbon ol {
+  padding-inline-start: 1.15em;
+}
+
+.ribbon li + li {
+  margin-block-start: 0;
+}
+
+.ribbon li::marker {
+  color: var(--ink-faint);
+}
+
+.ribbon code {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 0.88em;
+}
+
+.ribbon a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+  text-decoration-color: var(--rule);
+}
+
+.ribbon hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  width: 22%;
+  margin-inline: auto;
+}
+
+/* ------------------------------------------------------------------ pull quote */
+
+.pullquote {
+  font-family: var(--font-display);
+  font-size: calc(var(--fs-body) * 1.24);
+  font-style: italic;
+  line-height: calc(var(--lh) * 1.5);
+  text-align: left;
+  color: var(--ink);
+  border-block: 1px solid var(--ink);
+  padding-block: calc(var(--lh) * 0.5);
+  hyphens: none;
+}
+
+.pullquote__attribution {
+  display: block;
+  font-family: var(--font-text);
+  font-style: normal;
+  font-size: var(--fs-small);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+  margin-block-start: calc(var(--lh) * 0.25);
+}
+
+/* ------------------------------------------------------------------ figures */
+
+.figure {
+  margin: 0;
+}
+
+.figure__frame {
+  display: block;
+  width: 100%;
+  background: var(--paper-edge);
+  overflow: hidden;
+}
+
+
+.figure img {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* Held slightly above centre by default: a cropped photograph's subject is
+     usually in the upper half, and a face cropped at the forehead is a much
+     worse failure than a little extra foreground. */
+  object-position: 50% 35%;
+  /* Ink-on-paper rather than screenshot-on-panel. `multiply` lets the paper
+     ground show through the highlights, which is what makes a photograph read
+     as printed rather than pasted on.
+     
+     The contrast lift is not decoration. A typical photograph is mid-tone
+     heavy — this sample is 84% within the middle four octiles — and `multiply`
+     against a cream ground turns that to mud. Pushing the range out first
+     gives the blend real blacks and near-paper whites to work with. Measured
+     against both photographs and line art; it improves both. */
+  filter: grayscale(1) contrast(1.45) brightness(1.08);
+  mix-blend-mode: multiply;
+}
+
+.figure img[data-focus='top'] {
+  object-position: 50% 12%;
+}
+
+.figure img[data-focus='center'] {
+  object-position: 50% 35%;
+}
+
+.figure img[data-focus='bottom'] {
+  object-position: 50% 88%;
+}
+
+.figure__frame {
+  position: relative;
+}
+
+/* At night the plate is a negative. No blend mode here: `multiply` would sink
+   an already-dark image into the ground, and `screen` would blow it out. */
+/*
+ * At night the two kinds of image want opposite things, which is why the
+ * server classifies them.
+ *
+ * A plate — a chart, a diagram, an engraving — is ink on paper, so inverting it
+ * gives exactly the right thing: light strokes on a dark ground.
+ *
+ * A photograph inverted is a film negative. It must stay a positive image and
+ * merely stop glaring: held back in brightness so it sits *in* the dark page
+ * rather than burning a hole in it.
+ */
+[data-theme='night'] .figure img {
+  mix-blend-mode: normal;
+}
+
+[data-theme='night'] .figure img[data-tone='plate'] {
+  filter: grayscale(1) invert(1) contrast(1.18) brightness(0.92);
+}
+
+[data-theme='night'] .figure img[data-tone='photo'] {
+  filter: grayscale(1) contrast(1.3) brightness(0.78);
+}
+
+.figure__caption {
+  font-size: var(--fs-caption);
+  font-style: italic;
+  line-height: calc(var(--lh) * 0.72);
+  color: var(--ink-soft);
+  padding-block-start: calc(var(--lh) * 0.28);
+  border-block-start: 1px solid var(--rule-hair);
+  margin-block-start: calc(var(--lh) * 0.28);
+  hyphens: none;
+}
+
+/* ------------------------------------------------------------------ furniture */
+
+.jump-line {
+  font-size: var(--fs-small);
+  font-style: italic;
+  font-variant-numeric: tabular-nums; /* the number must never change the width */
+  color: var(--ink-soft);
+  text-align: right;
+}
+
+.jump-line--from {
+  text-align: left;
+  border-block-end: 1px solid var(--rule-hair);
+  padding-block-end: calc(var(--lh) * 0.2);
+}
+
+.folio {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: var(--fs-small);
+  font-variant-caps: all-small-caps;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+  border-block-start: 1px solid var(--rule);
+  padding-block-start: calc(var(--lh) * 0.25);
+}
+
+.continued {
+  font-size: var(--fs-small);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------ story head */
+
+/*
+ * Head furniture is measured in exactly this markup and then rendered in it, so
+ * its internal spacing must be self-contained — no reliance on `.ribbon`
+ * rhythm, and no user-agent margins left to chance.
+ */
+.story-head {
+  display: flow-root;
+  margin: 0;
+}
+
+.story-head > * {
+  margin: 0;
+}
+
+.story-head > * + * {
+  margin-block-start: calc(var(--lh) * 0.5);
+}
+
+.story-head .headline {
+  line-height: calc(var(--lh) * 1);
+}
+
+.story-head--lead {
+  text-align: center;
+  padding-block-end: calc(var(--lh) * 0.25);
+}
+
+.story-head--lead .headline {
+  line-height: calc(var(--lh) * 1.5);
+}
+
+.story-head--lead .deck {
+  max-inline-size: 34em;
+  margin-inline: auto;
+}
+
+/* Sub-heads inside a story body. */
+.sub-head {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  line-height: var(--lh);
+  margin: 0;
+}
+
+/* A crosshead, not a headline. At column measure anything larger wraps to
+   three lines and reads as a second story starting. */
+.sub-head--2 {
+  font-size: var(--fs-body);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.12em;
+}
+
+.sub-head--3 {
+  font-size: calc(var(--fs-body) * 1.05);
+  font-style: italic;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+/* A block whose image never resolved. Occupies its slot, shows nothing. */
+.block-void {
+  height: 0;
+  overflow: hidden;
+}
+
+.jump-line__title {
+  font-family: var(--font-display);
+  font-style: normal;
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------------ tables */
+
+/*
+ * Agate: the small, dense type a paper reserves for market data.
+ *
+ * THE CONSTRAINT: every row must be exactly one baseline tall, or the table
+ * stops being splittable and starts clipping through the middle of a row. That
+ * governs three choices below —
+ *
+ *   1. `line-height` is `--lh` even though the type is smaller, so a row is a
+ *      baseline regardless of the font size;
+ *   2. cells carry no vertical padding, which would add to the row box;
+ *   3. rules are drawn with `box-shadow`, not `border`, because a border adds
+ *      its width to the row and a 1px border on 12 rows is 12px of drift.
+ */
+.table-block {
+  display: flow-root;
+}
+
+.table-block__label {
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  line-height: var(--lh);
+  margin: 0;
+  box-shadow: inset 0 -1px 0 var(--ink);
+}
+
+table.agate {
+  width: 100%;
+  /* Load-bearing. With `auto`, cells that must not wrap size the table to
+     their content and it grows wider than its column; `fixed` honours the
+     100% unconditionally and lets cells truncate instead. Per-column widths
+     are computed from the content in render/ribbon.ts. */
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: calc(var(--fs-body) * 0.82);
+  font-variant-numeric: tabular-nums lining-nums;
+  hyphens: none;
+}
+
+table.agate th,
+table.agate td {
+  line-height: var(--lh);
+  height: var(--lh);
+  padding: 0 0.4em 0 0;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+table.agate th:last-child,
+table.agate td:last-child {
+  padding-right: 0;
+}
+
+table.agate th {
+  font-family: var(--font-text);
+  font-weight: 400;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  /* A rule that costs no height — see THE CONSTRAINT above. */
+  box-shadow: inset 0 -1px 0 var(--rule);
+}
+
+table.agate tbody tr:last-child td {
+  box-shadow: inset 0 -1px 0 var(--rule-hair);
+}
+
+/* The first column is the name; it takes the slack and truncates if it must. */
+table.agate th:first-child,
+table.agate td:first-child {
+  text-overflow: ellipsis;
+}
+
+/* Declines. No colour — this is a newspaper, and red would be the only colour
+   on the page. The paper's convention is a form of the numeral, not a hue. */
+table.agate td.is-down {
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------------ sources */
+
+/*
+ * The credit line closing a summarised story.
+ *
+ * Atomic, and snapped to the baseline like every other atomic block, so it can
+ * never be split from the story it belongs to.
+ */
+.source-line {
+  font-size: var(--fs-small);
+  line-height: var(--lh);
+  color: var(--ink-soft);
+  hyphens: none;
+  box-shadow: inset 0 1px 0 var(--rule-hair);
+  padding-block-start: calc(var(--lh) * 0.25);
+}
+
+.source-line__label {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+
+.source-line__label::after {
+  content: ' ';
+}
+
+.source-line__link,
+.source-line__name {
+  font-style: italic;
+}
+
+.source-line__link {
+  color: var(--ink);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+  text-decoration-color: var(--rule);
+}
+
+.source-line__link:hover {
+  text-decoration-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Inline links in body copy. Understated: this is a page, not a web page, and
+   a paragraph peppered with blue would stop reading like print. */
+.ribbon a[href] {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+  text-decoration-color: var(--rule);
+}
+
+.ribbon a[href]:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}

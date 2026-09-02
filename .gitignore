@@ -1,0 +1,18 @@
+# Node
+node_modules/
+reader/dist/
+.vite/
+
+# Python. uv.lock is committed deliberately: this is an application, not a
+# library, and the lockfile is what makes a deployment reproducible.
+.venv/
+__pycache__/
+*.egg-info/
+
+# macOS
+.DS_Store
+
+# Local editions dropped by the generator. The committed sample edition is
+# force-added so the reader always has a fixture to render.
+editions/*
+!editions/2026-09-02/

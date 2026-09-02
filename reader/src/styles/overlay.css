@@ -1,0 +1,150 @@
+/* Contents and archive sheets. */
+
+/* `display: grid` below outranks the user-agent `[hidden] { display: none }`,
+   so the scrim must be hidden explicitly or it sits over the paper forever,
+   greying the ink and swallowing clicks. */
+.overlay[hidden] {
+  display: none;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--ink) 40%, transparent);
+  padding: 1.5rem;
+}
+
+.overlay__sheet {
+  width: min(38rem, 100%);
+  max-height: min(80vh, 44rem);
+  overflow: auto;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: 0 8px 48px var(--shadow);
+  padding: calc(var(--lh) * 0.75) calc(var(--lh) * 1);
+}
+
+.overlay__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 2px solid var(--ink);
+  padding-block-end: calc(var(--lh) * 0.3);
+}
+
+.overlay__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.12em;
+  font-size: var(--fs-headline-sm);
+  margin: 0;
+}
+
+.overlay__close {
+  font: inherit;
+  font-size: 1.4rem;
+  line-height: 1;
+  background: transparent;
+  border: 0;
+  color: var(--ink-soft);
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+}
+
+.contents,
+.archive {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.contents__section + .contents__section {
+  margin-block-start: calc(var(--lh) * 0.75);
+}
+
+.contents__section-name,
+.contents__story,
+.archive__row {
+  font: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  color: var(--ink);
+  padding: 0.25rem 0;
+}
+
+.contents__section-name {
+  font-family: var(--font-display);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  color: var(--ink-soft);
+  border-bottom: 1px solid var(--rule-hair);
+  margin-block-start: calc(var(--lh) * 0.4);
+}
+
+.contents__stories {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.contents__story {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.contents__headline {
+  flex: 1;
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* A leader of dots, as a contents page should have. */
+.contents__story::after {
+  content: '';
+  order: 1;
+}
+
+.contents__page {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+  font-size: var(--fs-small);
+}
+
+.contents__story:hover,
+.archive__row:hover,
+.contents__section-name:hover {
+  color: var(--accent);
+}
+
+.archive__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  border-bottom: 1px solid var(--rule-hair);
+  padding-block: 0.45rem;
+}
+
+.archive__row[data-current='true'] .archive__date::after {
+  content: ' — this edition';
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+.archive__meta {
+  font-size: var(--fs-small);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}

@@ -1,0 +1,361 @@
+/*
+ * Page and column shells.
+ *
+ * Column rules are drawn as a background on the column *container*, never as
+ * borders on the columns themselves. A border would add width to the box and
+ * therefore change the measure, which would change line breaking, which would
+ * invalidate the ledger the layout was computed from.
+ */
+
+#app {
+  min-height: 100dvh;
+  background: var(--paper-edge);
+}
+
+.paper {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------------ scroll */
+
+/* Measure, not width, is the constraint. Source Serif at 17px runs about
+   8.4px per character, so ~34rem of text is the 62-68 character line the body
+   copy is designed around. The shell is that plus its margins. */
+.paper--scroll {
+  max-width: 41rem;
+  margin-inline: auto;
+  padding: calc(var(--lh) * 1) var(--page-margin) calc(var(--lh) * 4);
+  box-shadow: 0 0 0 1px var(--rule-hair), 0 2px 24px var(--shadow);
+}
+
+@media (min-width: 900px) {
+  .paper--scroll {
+    padding-inline: calc(var(--lh) * 2.5);
+  }
+}
+
+.paper--scroll .story {
+  margin-block-start: calc(var(--lh) * 1.25);
+  padding-block-start: calc(var(--lh) * 0.5);
+}
+
+.paper--scroll .story + .story {
+  border-block-start: 1px solid var(--rule-hair);
+}
+
+/* The masthead is the one element that wants the full sheet, not the measure. */
+.paper--scroll .masthead {
+  margin-inline: calc(var(--lh) * -0.5);
+}
+
+/* ------------------------------------------------------------------ paged */
+
+.stage {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--paper-edge);
+  touch-action: pan-y;
+}
+
+.page {
+  position: absolute;
+  inset: 0;
+  width: var(--page-w);
+  height: var(--page-h);
+  background: var(--paper);
+  /* Load-bearing: guarantees a page's internal layout can never invalidate a
+     sibling's, so preparing the next page mid-turn cannot cause a visible
+     relayout. */
+  contain: strict;
+  will-change: auto;
+  overflow: hidden;
+}
+
+.page__type {
+  position: absolute;
+  inset: var(--page-mt) var(--page-mr) var(--page-mb) var(--page-ml);
+}
+
+.col {
+  position: absolute;
+  overflow: hidden;
+  contain: strict;
+}
+
+/* Hairline between columns, painted by the container. */
+.col::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: calc(var(--col-gutter) / -2);
+  border-right: var(--rule-w) solid var(--rule-hair);
+}
+
+.col:last-child::after {
+  display: none;
+}
+
+/* A fragment: an exact-height window onto a whole ribbon, offset upward so the
+   right lines show. The ribbon is never re-broken — only masked. */
+.slice {
+  position: relative;
+  overflow: hidden;
+}
+
+.slice > .ribbon {
+  position: absolute;
+  top: var(--slice-offset, 0);
+  left: 0;
+  width: 100%;
+}
+
+/* ------------------------------------------------------------------ chrome */
+
+.toolbar {
+  position: fixed;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.5rem;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  box-shadow: 0 2px 18px var(--shadow);
+  z-index: 20;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.toolbar[data-hidden='true'] {
+  opacity: 0;
+  transform: translateX(-50%) translateY(0.5rem);
+  pointer-events: none;
+}
+
+.toolbar button {
+  font: inherit;
+  font-size: var(--fs-small);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+  min-width: 2.2rem;
+  min-height: 2.2rem;
+}
+
+.toolbar button:hover,
+.toolbar button:focus-visible {
+  background: var(--paper-edge);
+  color: var(--ink);
+}
+
+.toolbar button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.toolbar__sep {
+  width: 1px;
+  align-self: stretch;
+  background: var(--rule-hair);
+  margin-inline: 0.15rem;
+}
+
+/* ------------------------------------------------------------------ states */
+
+.notice {
+  max-width: 34rem;
+  margin: 18vh auto;
+  padding: var(--lh);
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.notice h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.notice code {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 0.9em;
+  background: var(--paper-edge);
+  padding: 0.1em 0.35em;
+}
+
+/* Printer's marks: a bad generation run should be visible, not fatal. */
+.marks {
+  position: fixed;
+  right: 0.75rem;
+  top: 0.75rem;
+  z-index: 30;
+  font-size: var(--fs-small);
+}
+
+.marks__toggle {
+  font: inherit;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.1em;
+  background: var(--paper);
+  color: var(--accent);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  cursor: pointer;
+}
+
+.marks__list {
+  margin-block-start: 0.4rem;
+  max-width: min(28rem, 70vw);
+  max-height: 60vh;
+  overflow: auto;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: 0 2px 18px var(--shadow);
+  padding: 0.6rem 0.8rem;
+  list-style: none;
+}
+
+.marks__list li + li {
+  margin-block-start: 0.5rem;
+  border-block-start: 1px solid var(--rule-hair);
+  padding-block-start: 0.5rem;
+}
+
+.marks__scope {
+  display: block;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+/* ------------------------------------------------------------------ page furniture */
+
+.band {
+  position: absolute;
+  overflow: hidden;
+}
+
+.band--masthead .masthead {
+  padding-block-start: 0;
+}
+
+/* Column children stack with no margins of their own: every height in a column
+   was allotted by the packer and is written explicitly by the renderer. Any
+   margin here would be space the plan never budgeted for. */
+.col > * {
+  margin: 0;
+}
+
+.col > .section-rule {
+  margin-block-start: 0;
+  display: flex;
+  align-items: flex-end;
+  padding-block-end: calc(var(--lh) * 0.2);
+}
+
+.folio {
+  position: absolute;
+}
+
+.stage .jump-line {
+  position: absolute;
+  margin: 0;
+}
+
+/* The turn shadow: a gradient on the incoming leaf, composited only. */
+.page--from-right::before,
+.page--from-left::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2rem;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.page--from-right::before {
+  left: 0;
+  background: linear-gradient(to right, var(--shadow), transparent);
+}
+
+.page--from-left::before {
+  right: 0;
+  background: linear-gradient(to left, var(--shadow), transparent);
+}
+
+/* ------------------------------------------------------------------ toolbar type */
+
+.toolbar__a-small {
+  font-size: calc(var(--fs-small) * 0.85);
+}
+
+.toolbar__a-large {
+  font-size: calc(var(--fs-small) * 1.35);
+}
+
+.toolbar__position {
+  font-size: var(--fs-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-faint);
+  padding-inline: 0.4rem;
+  min-width: 3.5rem;
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ sheets */
+
+/*
+ * A sheet is the thing that turns: one leaf, or two side by side in a spread.
+ * The sheet is what the flip animates, so it is the positioned surface and the
+ * pages within it are ordinary flow children.
+ */
+.sheet {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  backface-visibility: hidden;
+}
+
+.sheet .page {
+  position: relative;
+  inset: auto;
+  flex: 0 0 auto;
+}
+
+/* The fold. An inset shadow on each inner edge reads as a bound gutter without
+   drawing a line that would compete with the column rules. */
+.sheet--pair .page:first-child {
+  box-shadow: inset -14px 0 20px -14px var(--shadow);
+}
+
+.sheet--pair .page:last-child {
+  box-shadow: inset 14px 0 20px -14px var(--shadow);
+}
+
+.toolbar__glyph {
+  font-size: calc(var(--fs-small) * 1.25);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+/* Full screen: the paper should be the only thing on the display, so the
+   letterboxing either side of a lone page goes with it. */
+:root:fullscreen .stage,
+:root:-webkit-full-screen .stage {
+  background: var(--paper-edge);
+}

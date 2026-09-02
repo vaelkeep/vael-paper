@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The Vael Paper server.
+
+  Modelled on com.coreautomation.vaelkeep.server.plist. Install with:
+    cp launchd/com.coreautomation.vaelpaper.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.coreautomation.vaelpaper.plist
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.coreautomation.vaelpaper</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/rodmoore/.local/bin/uv</string>
+    <string>run</string>
+    <string>vael-paper</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/rodmoore/Data/dev/vael-paper/server</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>VAEL_PAPER_PORT</key>
+    <string>8791</string>
+    <key>VAEL_PAPER_EDITIONS</key>
+    <string>/Users/rodmoore/Data/dev/vael-paper/editions</string>
+    <key>VAEL_PAPER_READER</key>
+    <string>/Users/rodmoore/Data/dev/vael-paper/reader/dist</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>30</integer>
+
+  <key>StandardOutPath</key>
+  <string>/Users/rodmoore/Data/dev/vael-paper/data/logs/vael-paper.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/rodmoore/Data/dev/vael-paper/data/logs/vael-paper.err.log</string>
+</dict>
+</plist>

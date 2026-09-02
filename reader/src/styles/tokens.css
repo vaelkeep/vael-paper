@@ -1,0 +1,134 @@
+/*
+ * Design tokens and the baseline grid.
+ *
+ * `--lh` is the baseline unit and the single most load-bearing value in the
+ * project. Every block margin and every atomic element's height is an integer
+ * multiple of it, which is what lets the paginator do integer arithmetic over
+ * line counts instead of float geometry. It is written by geometry.ts as an
+ * integer pixel value; the declaration here is only a pre-boot fallback.
+ */
+
+:root {
+  /* ---- rhythm (geometry.ts overwrites these) ---- */
+  --font-scale: 1;
+  --fs-body: 17px;
+  --lh: 26px;
+
+  /* ---- type scale, in baseline units where it matters ---- */
+  /* Set per-render from the band it occupies — a spread's masthead sits in
+     half the viewport, so a vw-based size wraps and eats the page. */
+  --fs-masthead: 4rem;
+  --fs-headline-lead: calc(var(--fs-body) * 2.6);
+  --fs-headline: calc(var(--fs-body) * 1.72);
+  --fs-headline-sm: calc(var(--fs-body) * 1.28);
+  --fs-deck: calc(var(--fs-body) * 1.06);
+  --fs-small: calc(var(--fs-body) * 0.78);
+  --fs-caption: calc(var(--fs-body) * 0.8);
+
+  --font-text: 'Source Serif 4', 'Iowan Old Style', 'Palatino Linotype', Palatino,
+    'Book Antiqua', Georgia, serif;
+  --font-display: 'Playfair Display', 'Didot', 'Bodoni MT', 'Times New Roman', serif;
+
+  /* ---- measure ---- */
+  --col-gutter: calc(var(--lh) * 0.85);
+  --rule-w: 1px;
+  --page-margin: calc(var(--lh) * 1.5);
+
+  /* ---- day: warm off-white, warm near-black. Never #fff on #000; pure
+         values on a bright panel are what make long reading tiring. ---- */
+  --paper: #faf7f0;
+  --paper-edge: #f2ede2;
+  --ink: #1a1714;
+  --ink-soft: #4a443c;
+  --ink-faint: #7d7568;
+  --rule: #c9c1b2;
+  --rule-hair: #ddd6c8;
+  --accent: #7c2d12;
+  --shadow: rgba(40, 34, 26, 0.18);
+
+  color-scheme: light;
+}
+
+[data-theme='sepia'] {
+  --paper: #f3e7d0;
+  --paper-edge: #ecdcc0;
+  --ink: #2b2015;
+  --ink-soft: #5c4a35;
+  --ink-faint: #8a7458;
+  --rule: #c5ad88;
+  --rule-hair: #d9c5a4;
+  --accent: #7c3a12;
+  --shadow: rgba(60, 44, 22, 0.2);
+  color-scheme: light;
+}
+
+[data-theme='night'] {
+  --paper: #14120f;
+  --paper-edge: #1b1815;
+  --ink: #ddd5c7;
+  --ink-soft: #aba293;
+  --ink-faint: #7b7367;
+  --rule: #3a352e;
+  --rule-hair: #2a2620;
+  --accent: #c98a5a;
+  --shadow: rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+/* Follow the device only when the reader has expressed no preference. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --paper: #14120f;
+    --paper-edge: #1b1815;
+    --ink: #ddd5c7;
+    --ink-soft: #aba293;
+    --ink-faint: #7b7367;
+    --rule: #3a352e;
+    --rule-hair: #2a2620;
+    --accent: #c98a5a;
+    --shadow: rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper-edge);
+  color: var(--ink);
+}
+
+body {
+  font-family: var(--font-text);
+  font-size: var(--fs-body);
+  line-height: var(--lh);
+  font-variant-numeric: oldstyle-num proportional-nums;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%; /* iOS must not rescale text under us */
+}
+
+/* The measuring host. Off-screen but genuinely laid out — `display:none` and
+   `content-visibility:hidden` both skip layout, which would defeat the point. */
+#measure-host {
+  position: fixed;
+  left: -99999px;
+  top: 0;
+  visibility: hidden;
+  contain: layout style;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
