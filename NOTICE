@@ -1,0 +1,29 @@
+THIRD-PARTY NOTICES
+===================
+
+This project is licensed under the MIT License; see LICENSE.
+
+That grant covers this project's own source code and documentation. It does not
+extend to the third-party works redistributed here, which remain under their own
+terms:
+
+
+Fonts — reader/src/fonts/
+-------------------------
+
+Source Serif 4
+    Copyright 2014-2023 Adobe (https://adobe.com/), with Reserved Font Name
+    'Source'.
+    Licensed under the SIL Open Font License, Version 1.1.
+    https://github.com/adobe-fonts/source-serif
+
+Playfair Display
+    Copyright 2017 The Playfair Display Project Authors
+    (https://github.com/clauseggers/Playfair-Display).
+    Licensed under the SIL Open Font License, Version 1.1.
+
+The SIL Open Font License permits this redistribution, including bundling with
+an application, provided the fonts are not sold on their own and any modified
+version is renamed. The bundled files are unmodified Latin-subset builds.
+
+Full licence text: https://openfontlicense.org

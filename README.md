@@ -242,10 +242,9 @@ symptoms that look like something else entirely.
 
 © 2026 Rod Moore
 
-The MIT licence covers this project's own code. The bundled fonts under
+The MIT licence covers this project's own code. The fonts bundled under
 `reader/src/fonts/` are third-party works redistributed under the SIL Open Font
-License 1.1, which permits it; see
-[`reader/src/fonts/README.md`](reader/src/fonts/README.md).
+License 1.1, which permits it — see [`NOTICE`](NOTICE).
 
 ## 🙏 Acknowledgements
 

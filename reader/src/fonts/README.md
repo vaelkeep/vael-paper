@@ -11,7 +11,8 @@ the exact metrics it will render with. See `layout/measure.ts`.
 
 The OFL permits redistribution, including bundling with an application, so long
 as the fonts are not sold on their own and any modified version is renamed.
-These are unmodified, Latin-subset builds.
+These are unmodified, Latin-subset builds. Full attribution is in
+[`NOTICE`](../../../NOTICE) at the repository root.
 
 `fonts.css` is generated: each face is a variable font covering its whole weight
 axis, so one file serves every weight the paper uses.

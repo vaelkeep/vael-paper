@@ -19,23 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-THIRD-PARTY ASSETS
-
-The MIT licence above covers this project's own source code and documentation.
-It does not extend to the fonts bundled under `reader/src/fonts/`, which are
-third-party works redistributed under their own terms:
-
-  Source Serif 4   Copyright 2014-2023 Adobe (https://adobe.com/), with
-                   Reserved Font Name 'Source'.
-                   SIL Open Font License, Version 1.1.
-
-  Playfair Display Copyright 2017 The Playfair Display Project Authors
-                   (https://github.com/clauseggers/Playfair-Display).
-                   SIL Open Font License, Version 1.1.
-
-The OFL permits this redistribution, including bundling with an application.
-See `reader/src/fonts/README.md`. The full licence text is available at
-https://openfontlicense.org.
