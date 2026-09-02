@@ -2,6 +2,14 @@
 
 A personal daily newspaper: real page turns, real typography, real pagination.
 
+![The front page and page two of a sample edition, shown as a two-page spread](docs/front-page.png)
+
+*The opening spread of the sample edition, at the default text size. Everything
+here is laid out at read time: the columns are chosen from the measure, the
+drop caps are sized from the font's own cap-height, and both stories break to
+"continued on" slugs that resolve to real page numbers. Resize the window and
+it all repaginates around wherever you were reading.*
+
 This project **renders and serves** an edition. It does not gather content.
 Something else — most likely a nightly Vaelkeep cron job — writes a finished
 edition into `editions/` in the format described in [`docs/FORMAT.md`](docs/FORMAT.md),
