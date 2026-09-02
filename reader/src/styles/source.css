@@ -1,0 +1,176 @@
+/* The source view: a corner button, a wide sheet, and a highlight.js theme
+   drawn from the paper's own palette so the code reads as part of the page. */
+
+.source-button {
+  position: fixed;
+  top: max(0.6rem, env(safe-area-inset-top));
+  left: max(0.75rem, env(safe-area-inset-left));
+  z-index: 20;
+  font-family: var(--font-text);
+  font-size: var(--fs-small);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+  background: transparent;
+  border: 0;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 180ms ease, color 180ms ease;
+}
+
+.source-button:hover,
+.source-button:focus-visible {
+  opacity: 1;
+  color: var(--ink);
+  outline: none;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.overlay__sheet--wide {
+  width: min(72rem, 100%);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.source__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.5rem;
+  padding-block: calc(var(--lh) * 0.4);
+  border-bottom: 1px solid var(--rule-hair);
+}
+
+.source__tab,
+.source__more,
+.source__copy {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: var(--fs-small);
+  color: var(--ink-soft);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 0.2rem 0.55rem;
+  cursor: pointer;
+}
+
+.source__tab[aria-selected='true'] {
+  color: var(--ink);
+  border-color: var(--rule);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.source__more {
+  margin-inline-start: auto;
+  border-color: var(--rule-hair);
+  max-width: 18rem;
+}
+
+.source__code {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin: 0;
+  padding: calc(var(--lh) * 0.6) 0;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  font-size: calc(var(--fs-body) * 0.8);
+  line-height: 1.55;
+  color: var(--ink);
+  tab-size: 2;
+  -webkit-text-size-adjust: 100%;
+}
+
+.source__code code {
+  display: block;
+  white-space: pre;
+  min-width: max-content;
+}
+
+.source__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--rule-hair);
+  padding-block-start: calc(var(--lh) * 0.4);
+}
+
+.source__note {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--ink-faint);
+}
+
+.source__note a {
+  color: var(--ink-soft);
+}
+
+.source__copy {
+  border-color: var(--rule);
+  color: var(--ink);
+  flex: none;
+}
+
+/* ------------------------------------------------------ highlight.js theme
+   Two inks and an italic: the same restraint as the paper itself. */
+.hljs-fence,
+.hljs-punctuation,
+.hljs-bullet,
+.hljs-quote {
+  color: var(--ink-faint);
+}
+
+.hljs-attr,
+.hljs-section {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.hljs-section {
+  font-family: var(--font-display);
+  font-size: 1.05em;
+}
+
+.hljs-string,
+.hljs-number,
+.hljs-literal {
+  color: var(--ink-soft);
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: 700;
+}
+
+.hljs-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.hljs-code {
+  color: var(--ink-soft);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  border-radius: 2px;
+}
+
+.hljs-meta,
+.hljs-comment {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+@media (max-width: 640px) {
+  .overlay--source {
+    padding: 0.5rem;
+  }
+  .overlay__sheet--wide {
+    max-height: 96vh;
+  }
+}

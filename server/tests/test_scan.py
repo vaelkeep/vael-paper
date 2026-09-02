@@ -281,3 +281,13 @@ def test_editions_are_listed_newest_first(tmp_path: Path) -> None:
     assert [p.name for p in list_edition_dirs(tmp_path)] == [
         "2026-09-03", "2026-09-02", "2026-09-01",
     ]
+
+
+def test_the_source_view_gets_the_files_exactly_as_written() -> None:
+    """The reader shows an article's markdown alongside the rendered page, so
+    the server must pass the file through untouched, frontmatter and all."""
+    edition = scan_edition(SAMPLE)
+    for article in edition.articles:
+        on_disk = (SAMPLE / "articles" / article.file).read_text(encoding="utf-8")
+        assert article.source == on_disk
+    assert edition.manifest_source == (SAMPLE / "edition.json").read_text(encoding="utf-8")

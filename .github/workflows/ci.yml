@@ -67,7 +67,7 @@ jobs:
         run: uv run pytest
 
   edition:
-    name: Sample edition
+    name: Bundled editions
     runs-on: ubuntu-latest
 
     # The sample edition is the fixture every other test leans on, and it is
@@ -103,4 +103,13 @@ jobs:
           # warning means real content regressed; none at all means the file
           # that proves the tolerant path stopped being broken.
           assert codes == ["yaml_parse"], f"unexpected warnings: {codes}"
+
+          # The demo edition is what visitors to the Pages site read, and its
+          # source view shows every file. It must scan without a mark.
+          demo = scan_edition(Path("../editions/2026-09-03"))
+          demo_codes = [w.code for w in demo.warnings]
+          print(f"demo: {len(demo.articles)} articles, {len(demo.images)} images, warnings={demo_codes}")
+          assert demo.masthead == "The John Smith Daily"
+          assert not demo_codes, f"the demo edition has printer's marks: {demo_codes}"
+          assert all(a.source for a in demo.articles), "an article lost its source"
           PY

@@ -15,6 +15,7 @@ import './fonts/fonts.css';
 import './styles/type.css';
 import './styles/page.css';
 import './styles/overlay.css';
+import './styles/source.css';
 
 import { fetchArchive, fetchEdition, type Edition } from './content/manifest';
 import { applyRhythm, chooseMode, PAGINATION_MIN_WIDTH } from './layout/geometry';
@@ -34,6 +35,7 @@ import { articleHref, onRouteChange, parseRoute, replaceRoute, sectionHref } fro
 import { mountOverlay, type OverlayHandle } from './ui/overlay';
 import { mountToolbar, type ToolbarHandle } from './ui/toolbar';
 import { mountPrintersMarks } from './ui/printers-marks';
+import { mountSourceView, type SourceViewHandle } from './ui/source-view';
 import { onFontsSettled } from './util/fonts';
 import { toggleFullscreen } from './util/fullscreen';
 import { debounce, h } from './util/dom';
@@ -53,6 +55,7 @@ class Reader {
   private scroll: ContinuousHandle | null = null;
   private toolbar: ToolbarHandle | null = null;
   private overlay: OverlayHandle | null = null;
+  private source: SourceViewHandle | null = null;
 
   private lastW = 0;
   private lastH = 0;
@@ -97,6 +100,10 @@ class Reader {
         e.preventDefault();
         void toggleFullscreen();
       }
+      if (e.key === 's' || e.key === 'S') {
+        e.preventDefault();
+        this.source?.show(this.visibleArticleIds());
+      }
     });
 
     window.addEventListener('resize', this.onResize);
@@ -117,9 +124,12 @@ class Reader {
   private masthead(width = window.innerWidth, height = window.innerHeight): HTMLElement {
     const { manifest } = this.edition;
     const head = h('header', 'masthead');
-    // Roughly 0.105em per character of a fourteen-character name, then held
-    // back so a short window never gives the masthead more than it deserves.
-    const size = Math.round(Math.max(28, Math.min(width * 0.105, height * 0.1, 132)));
+    // Fit the name to the band: Playfair at weight 900 runs close to 0.53em per
+    // character, so the size that fills a given width scales inversely with
+    // the name's length. Held back so a short window never gives the masthead
+    // more than it deserves.
+    const perChar = 0.53 * Math.max(8, manifest.masthead.length);
+    const size = Math.round(Math.max(28, Math.min((width * 0.92) / perChar, height * 0.1, 132)));
     head.style.setProperty('--fs-masthead', `${size}px`);
     head.append(h('h1', 'masthead__name', manifest.masthead));
     head.append(h('div', 'masthead__rules'));
@@ -185,6 +195,26 @@ class Reader {
     );
 
     mountPrintersMarks(document.body, this.edition.warnings);
+    this.source = mountSourceView(document.body, this.edition, () => this.visibleArticleIds());
+  }
+
+  /** The stories on screen right now, in page order, for the source view. */
+  private visibleArticleIds(): string[] {
+    const ids: string[] = [];
+    const add = (id: string | undefined) => {
+      if (id && !id.startsWith('§') && this.edition.byId.has(id) && !ids.includes(id)) ids.push(id);
+    };
+    if (this.paged && this.plan) {
+      for (const index of this.paged.visiblePages()) {
+        for (const column of this.plan.pages[index]?.columns ?? []) {
+          for (const item of column.items) add(item.articleId);
+        }
+      }
+    } else {
+      add(this.scroll?.anchor()?.articleId);
+    }
+    if (ids.length === 0) add(this.edition.order[0]?.id);
+    return ids;
   }
 
   private async openArchive(): Promise<void> {
@@ -287,6 +317,7 @@ class Reader {
           templates: result.templates,
           images: this.edition.manifest.images ?? {},
           masthead: (w, hgt) => this.masthead(w, hgt),
+          mastheadName: this.edition.manifest.masthead,
           coverAlone: this.settings.coverAlone,
           onPageChange: (index) => {
             this.toolbar?.setPage(index, result.plan.pages.length);

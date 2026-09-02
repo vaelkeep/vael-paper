@@ -30,6 +30,8 @@ export interface RenderContext {
   images: Record<string, ImageAsset>;
   sectionNames: Map<string, string>;
   masthead: (width: number, height: number) => HTMLElement;
+  /** The paper's name, for the running head on interior pages. */
+  mastheadName: string;
   /** Page a story started on, so a continuation can say where it came from. */
   startPageOf: (articleId: string) => number | undefined;
 }
@@ -141,7 +143,7 @@ function folioNode(page: PagePlan, ctx: RenderContext, dateLabel: string): HTMLE
   node.style.bottom = `${Math.round(grid.margins.b / 2)}px`;
   node.style.width = `${grid.pageW - grid.margins.l - grid.margins.r}px`;
 
-  const left = h('span', undefined, page.index === 0 ? dateLabel : 'The Vael Paper');
+  const left = h('span', undefined, page.index === 0 ? dateLabel : ctx.mastheadName);
   const right = h('span', undefined, String(page.folio));
   node.append(left, right);
   return node;

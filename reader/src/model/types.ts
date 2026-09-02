@@ -49,6 +49,8 @@ export interface ArticleRef {
   sources: SourceRef[];
   word_count: number;
   body: string;
+  /** The file as written, frontmatter included. Absent from older exports. */
+  source?: string;
 }
 
 export interface SourceRef {
@@ -65,6 +67,8 @@ export interface Section {
 
 export interface EditionManifest {
   schema: number;
+  /** edition.json as written, for the source view. */
+  manifest_source?: string | null;
   id: string;
   date: string;
   volume: number;

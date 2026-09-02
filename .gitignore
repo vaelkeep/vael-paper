@@ -22,3 +22,4 @@ site/
 # force-added so the reader always has a fixture to render.
 editions/*
 !editions/2026-09-02/
+!editions/2026-09-03/

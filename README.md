@@ -2,12 +2,13 @@
 
 Your own daily newspaper — generated overnight, read like print.
 
-**[▶ Try it now](https://vaelkeep.github.io/vael-paper/)** — the sample edition,
-live. Turn pages with the arrow keys, resize the window, change the text size.
+**[▶ Try it now](https://vaelkeep.github.io/vael-paper/)** — a demo edition,
+live. Turn pages with the arrow keys, resize the window, change the text size,
+and press **Source** in the corner to see the markdown behind any page.
 
-![The front page and page two of a sample edition, shown as a two-page spread](docs/front-page.png)
+![The front page and page two of a demo edition, shown as a two-page spread](docs/front-page.png)
 
-*The opening spread of the sample edition, at the default text size. Nothing
+*The opening spread of the demo edition, at the default text size. Nothing
 here is a mockup: the column count is chosen from the measure, the drop caps are
 sized from the font's own cap-height, and both stories break to "continued on"
 slugs that resolve to real page numbers. Resize the window and it repaginates
@@ -93,7 +94,7 @@ npm --prefix reader run build
 cd server && uv run vael-paper
 ```
 
-Open **http://localhost:8791** and you are reading the sample edition.
+Open **http://localhost:8791** and you are reading the demo edition.
 
 ### Run it every day
 
@@ -135,6 +136,7 @@ to `main` and is what serves the **Try it now** link above.
 | Text size | the `A`/`A` pair in the toolbar |
 | Ground | Day / Sepia / Night |
 | Jump to a story | **Contents** — sections and stories, with live page numbers |
+| See the markdown | **Source** (top left, or `S`) — the files behind the page you are on, syntax-highlighted |
 | Earlier issues | **Archive** |
 | Paged ↔ scrolling | the mode button, which overrides the automatic choice |
 | Full screen | `⛶`, or press `f` |
@@ -171,10 +173,14 @@ http://localhost:8791/#/2026-09-02/s/markets             ← jump to a section
 http://localhost:8791/#/2026-09-02/p4                    ← resolved, then rewritten
 ```
 
-> **The sample edition is fiction.** The stories, the market figures and the
-> companies in `editions/2026-09-02/` were written to exercise the layout —
-> long articles that force continuations, tables that must break across
-> columns, a deliberately malformed file. None of it is reporting.
+> **Both bundled editions are fiction.** `editions/2026-09-03/` is the demo:
+> *The John Smith Daily*, one invented reader's paper for one Thursday in
+> Washington — the day's appointments, a budget and portfolio, the Commanders
+> and the Nationals, showtimes, dinner specials, and a cat. The people, venues,
+> films, figures and sources are made up, and every link points at an
+> `.example` domain. `editions/2026-09-02/` is the engineering fixture: long
+> articles that force continuations, a table that must break across columns, a
+> deliberately malformed file. None of it is reporting.
 
 ## 📰 Publishing an edition
 
@@ -283,9 +289,10 @@ uv run pytest      # frontmatter tolerance, URL safety, the four endpoints
 
 Both suites are pure and fast — no browser, no network, under two seconds
 together. [CI](.github/workflows/ci.yml) runs them on every push, plus a job
-that re-scans the sample edition, because it is both the test fixture and the
-worked example in the format guide: if it stops scanning, the documentation is
-wrong even when the code is right.
+that re-scans both bundled editions: the fixture must keep producing exactly
+its one deliberate warning, and the demo must produce none, because it is the
+worked example in the format guide — if it stops scanning, the documentation
+is wrong even when the code is right.
 
 The engine's rules are not obvious from the code alone. **Read
 [`docs/PAGINATION.md`](docs/PAGINATION.md) before changing anything under

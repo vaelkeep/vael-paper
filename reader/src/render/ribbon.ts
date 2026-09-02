@@ -126,30 +126,48 @@ function buildTable(block: Extract<Block, { kind: 'table' }>): HTMLElement {
   // a five-column table quietly grows wider than the page. Fixed layout honours
   // `width: 100%` unconditionally.
   //
-  // The widths are in `ch`, which for the tabular figures used here is exactly
-  // one digit — so a numeric column asks for precisely the space its longest
-  // value needs, and the first column (the name) takes whatever is left.
-  // Headers are set in letterspaced small caps, so they occupy a little more
-  // than one `ch` per character; values are tabular figures, which occupy
-  // exactly one. Without allowing for that, a header like "Change" truncates
-  // over a column of values that fit comfortably.
+  // Columns come in two kinds. A *numeric* column (prices, times, step counts)
+  // is given exactly the space its longest value needs, in `ch`, which for the
+  // tabular figures used here is exactly one digit. The *text* columns then
+  // share whatever is left, in proportion to their longest entries, and
+  // truncate with an ellipsis when the column is narrow. A share table has one
+  // text column, the company name, so it takes all the slack; a schedule with
+  // a day, a description and a place splits it three ways rather than letting
+  // the last column push the first off the edge.
   //
-  // Measured against the real headers in this face: the widest ("Change",
-  // "Company") need 1.12, so 1.15 covers them with a little slack. Do not
-  // raise it further — every extra ch here is taken from the first column,
-  // which is where the story names live.
+  // Headers are set in letterspaced small caps, so they occupy a little more
+  // than one `ch` per character. Measured against the real headers in this
+  // face: the widest ("Change", "Company") need 1.12, so 1.15 covers them with
+  // a little slack. Do not raise it further — every extra ch here is taken
+  // from the text columns, which is where the words live.
   const HEADER_WIDTH_FACTOR = 1.15;
+  // A bold total row runs about a tenth wider than the figures above it.
+  const BOLD_WIDTH_FACTOR = 1.12;
+  const NUMERIC = /^[\s\d.,:%+\u2212()$€£/·✓—-]*(?:am|pm)?$/i;
+  const plain = (html: string) => html.replace(/<[^>]+>/g, '').trim();
+  const cellWidth = (html: string) =>
+    Math.ceil(textLength(html) * (/<(strong|b)>/.test(html) ? BOLD_WIDTH_FACTOR : 1));
   const widest = block.align.map((_, i) =>
     Math.max(
       block.head[i] ? Math.ceil(textLength(block.head[i]!) * HEADER_WIDTH_FACTOR) : 0,
-      ...block.rows.map((r) => textLength(r[i] ?? '')),
+      ...block.rows.map((r) => cellWidth(r[i] ?? '')),
     ),
   );
+  const numeric = block.align.map(
+    (_, i) => i > 0 && block.rows.every((r) => NUMERIC.test(plain(r[i] ?? ''))),
+  );
+  const fixedCh = widest.reduce((sum, chars, i) => sum + (numeric[i] ? chars : 0), 0);
+  const fixedCount = numeric.filter(Boolean).length;
+  const textTotal = widest.reduce((sum, chars, i) => sum + (numeric[i] ? 0 : chars), 0);
   const group = el('colgroup');
   widest.forEach((chars, i) => {
     const colEl = el('col');
-    // The first column is the label; let it absorb the slack and truncate.
-    if (i > 0) colEl.style.width = `calc(${chars}ch + 0.6em)`;
+    if (numeric[i]) {
+      colEl.style.width = `calc(${chars}ch + 0.6em)`;
+    } else if (textTotal > 0) {
+      const share = (chars / textTotal).toFixed(3);
+      colEl.style.width = `calc((100% - ${fixedCh}ch - ${(fixedCount * 0.6).toFixed(1)}em) * ${share})`;
+    }
     group.append(colEl);
   });
   table.append(group);

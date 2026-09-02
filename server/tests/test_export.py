@@ -47,7 +47,8 @@ def test_export_lays_out_the_same_url_space_as_the_server(site: Path) -> None:
 def test_latest_is_a_real_file_not_a_link(site: Path) -> None:
     latest = site / "api" / "editions" / "latest.json"
     assert latest.is_file() and not latest.is_symlink()
-    assert json.loads(latest.read_text())["id"] == "2026-09-02"
+    newest = json.loads((site / "api" / "editions.json").read_text())[0]["id"]
+    assert json.loads(latest.read_text())["id"] == newest
 
 
 @needs_built_reader

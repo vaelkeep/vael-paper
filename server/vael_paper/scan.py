@@ -311,6 +311,7 @@ def scan_article(path: Path, edition_id: str, ctx: _Ctx) -> Article | None:
         sources=parse_sources(fm.get("sources") or fm.get("source"), scope, ctx),
         word_count=len(body.split()),
         body=body.strip(),
+        source=text,
     )
 
 
@@ -393,6 +394,10 @@ def scan_edition(edition_dir: Path, base_url: str = "") -> Edition:
     ctx = _Ctx()
     edition_id = edition_dir.name
     manifest = _read_manifest(edition_dir, ctx)
+    manifest_path = edition_dir / "edition.json"
+    manifest_source = (
+        manifest_path.read_text(encoding="utf-8") if manifest_path.exists() else None
+    )
 
     articles_dir = edition_dir / "articles"
     files = sorted(articles_dir.glob("*.md")) if articles_dir.is_dir() else []
@@ -454,6 +459,7 @@ def scan_edition(edition_dir: Path, base_url: str = "") -> Edition:
         generated_at=_as_text(manifest.get("generated_at")),
         front_template=_as_text(manifest.get("front_template")),
         content_hash=digest.hexdigest()[:16],
+        manifest_source=manifest_source,
         sections=sections,
         articles=articles,
         images=images,

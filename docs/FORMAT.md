@@ -91,6 +91,10 @@ should never be asked to.
 
 `word_count` is likewise computed by the server.
 
+The server also passes each file through untouched as `source`, and
+`edition.json` as `manifest_source`, so the reader's **Source** button can show
+the markdown behind any page exactly as the generator wrote it.
+
 ### Images are cropped, so say where to hold them
 
 A column is a fixed width and a plate may occupy at most sixteen baselines, so

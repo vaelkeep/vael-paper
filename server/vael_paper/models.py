@@ -69,6 +69,9 @@ class Article(BaseModel):
     sources: list[SourceRef] = Field(default_factory=list)
     word_count: int = 0
     body: str  # raw markdown; the reader parses it in a worker
+    # The file exactly as the generator wrote it, frontmatter included, so a
+    # reader can show the source of what it is looking at.
+    source: str = ""
 
 
 class Section(BaseModel):
@@ -88,6 +91,8 @@ class Edition(BaseModel):
     generated_at: str | None = None
     front_template: str | None = None
     content_hash: str = ""
+    # edition.json as written, for the reader's source view. None when absent.
+    manifest_source: str | None = None
     sections: list[Section] = Field(default_factory=list)
     articles: list[Article] = Field(default_factory=list)
     images: dict[str, ImageAsset] = Field(default_factory=dict)

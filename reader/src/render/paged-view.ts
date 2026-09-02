@@ -17,6 +17,8 @@ export interface PagedHandle {
   /** The reader's position, for restoring it across a relayout. */
   anchor(): Cursor | null;
   pageIndex(): number;
+  /** Every page on the sheet now showing: one, or two in a spread. */
+  visiblePages(): number[];
   pageCount(): number;
   goToPage(index: number, opts?: { animate?: boolean }): void;
   goToAnchor(anchor: Cursor): void;
@@ -35,6 +37,8 @@ export interface PagedOptions {
   images: Record<string, ImageAsset>;
   /** Built to fit the given band, in px. */
   masthead: (width: number, height: number) => HTMLElement;
+  /** The paper's name, for the running head on interior pages. */
+  mastheadName: string;
   onPageChange?: (index: number) => void;
   /** Present page one alone rather than paired with page two. */
   coverAlone?: boolean;
@@ -69,6 +73,7 @@ export function renderPaged(host: HTMLElement, options: PagedOptions): PagedHand
     images: options.images,
     sectionNames,
     masthead: options.masthead,
+    mastheadName: options.mastheadName,
     startPageOf: (id) => plan.byArticle.get(id)?.startPage,
   };
 
@@ -172,6 +177,7 @@ export function renderPaged(host: HTMLElement, options: PagedOptions): PagedHand
       return plan.pages[first]?.topAnchor ?? null;
     },
     pageIndex: () => sheets[flip.pageIndex]?.[0] ?? 0,
+    visiblePages: () => sheets[flip.pageIndex] ?? [],
     pageCount: () => plan.pages.length,
     goToPage: (index, opts) => showPage(index, opts?.animate ?? true),
     goToAnchor: (anchor) => showPage(plan.anchorToPage(anchor), false),
