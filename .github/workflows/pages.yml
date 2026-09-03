@@ -48,7 +48,9 @@ jobs:
         working-directory: server
         run: |
           uv sync --locked
-          uv run vael-paper-export --out ../site
+          uv run vael-paper-export --out ../site \
+            --base-url https://vaelkeep.github.io/vael-paper/ \
+            --social-card ../docs/social-card.png
 
       - name: The export is complete
         run: |
@@ -56,6 +58,8 @@ jobs:
           test -f site/api/editions.json
           test -f site/api/editions/latest.json
           test -f site/.nojekyll
+          test -f site/social-card.png
+          grep -q 'og:image" content="https://vaelkeep.github.io/vael-paper/social-card.png"' site/index.html
           ls site/editions/*/images/*.png >/dev/null
           echo "ok: $(find site -type f | wc -l) files"
 
