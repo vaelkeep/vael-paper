@@ -3,6 +3,11 @@
 Your own daily newspaper, no bias, no ads: written overnight from your
 calendar, budget, feeds and notes, and printed like a real broadsheet.
 
+> **Want the whole thing?** This repo is the press: it prints an edition, it
+> never writes one. **[hermes-paper-agent](https://github.com/vaelkeep/hermes-paper-agent)** is the complete nightly
+> newspaper — the desks that write it, the agent that runs them, and this
+> engine to print it. Start there unless you only need the press.
+
 *The Vael Paper* is the press. The paper it prints is yours, under your own
 name: the demo below is one reader's, *The John Smith Daily*, and the
 masthead comes from a single line in `paper.json`.
