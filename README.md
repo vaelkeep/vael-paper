@@ -55,6 +55,7 @@ around wherever you were reading.*
 - [Getting started](#-getting-started)
 - [Usage](#-usage)
 - [Publishing an edition](#-publishing-an-edition)
+- [Need an agent?](#-need-an-agent)
 - [Configuration](#-configuration)
 - [Architecture](#-architecture)
 - [Security](#-security)
@@ -79,7 +80,9 @@ one.** Something else writes a finished edition into `editions/` in the format
 described in [`docs/FORMAT.md`](docs/FORMAT.md), and the reader prints it. That
 separation means the reader can be built and tuned against a hand-written sample
 edition, and anything that can write markdown — a cron job, a shell script, you
-with a text editor — can publish an issue.
+with a text editor — can publish an issue. If you would rather not write that
+something yourself, [hermes-paper-agent](https://github.com/vaelkeep/hermes-paper-agent) is one, built to feed this —
+see [Need an agent?](#-need-an-agent).
 
 ## 🚀 Getting started
 
@@ -294,6 +297,37 @@ A story that carries `chart: {kind: bars, values: [...]}` instead of an image
 gets its plate drawn by the server in the paper's style — a model writes the
 numbers, the paper draws the picture.
 
+## 🤖 Need an agent?
+
+This project is the press, not the newsroom — it prints an edition, it never
+writes one. If you want the other half, there is a working generator built to
+feed it:
+
+**[hermes-paper-agent](https://github.com/vaelkeep/hermes-paper-agent)** — a nightly newspaper generator that runs as
+an agent. **[▶ Read an edition it produced](https://vaelkeep.github.io/hermes-paper-agent/)**, published the same way
+this demo is.
+
+It is the shape [`docs/GENERATING.md`](docs/GENERATING.md) describes, built
+out and running:
+
+- **Data desks** — small Python scripts that turn a calendar, a ledger, a step
+  count and live weather and market feeds into correct tables and `chart:`
+  blocks. Code, never a model, so the numbers are right every night.
+- **Prose desks** — a model writing one story at a time from a handful of
+  already-summarised items, which is what lets a modest local model succeed.
+- **A lead desk** that runs last, sees everything the others filed, and writes
+  the front page.
+- **The write → check → fix loop** around `vael-paper-check`, gated on
+  `"ok": true` so a red edition never publishes.
+
+It runs on [Hermes](https://hermes-agent.nousresearch.com), though little of it
+is Hermes-specific — its `AGENTS.md` and `SKILL.md` are the portable
+conventions, and its README has a section on moving it to another agent.
+
+Anything else that writes markdown into `editions/` works just as well. That is
+the point of the separation, and the reason this repo has no opinion about what
+generated the folder it is reading.
+
 ## ⚙️ Configuration
 
 | Variable | Description | Default |
@@ -379,7 +413,7 @@ symptoms that look like something else entirely.
 
 ## 🔮 Roadmap
 
-- [ ] A nightly generator — a scheduled job that summarises feeds into an edition
+- [x] A nightly generator — shipped as a companion project, [hermes-paper-agent](https://github.com/vaelkeep/hermes-paper-agent)
 - [ ] Front-page template matcher — named areas, a rail, teasers
 - [ ] Package the four API endpoints as a plugin for a wider agent host
 - [ ] Offline caching via a service worker
