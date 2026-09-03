@@ -59,11 +59,21 @@ def _set_meta(html: str, key: str, attr: str, content: str) -> str:
 
 
 def write_social_tags(out: Path, paper_title: str, motto: str,
-                      base_url: str | None, social_card: Path | None) -> None:
-    """Rewrite the exported index.html's link-preview tags for this paper."""
+                      base_url: str | None, social_card: Path | None,
+                      og_title: str | None = None,
+                      og_description: str | None = None) -> None:
+    """Rewrite the exported index.html's link-preview tags for this paper.
+
+    The masthead and motto are the sensible default, but a public demo usually
+    wants to say what the *project* is: "The John Smith Daily" tells a stranger
+    nothing. --og-title and --og-description override for exactly that case.
+    """
     index = out / "index.html"
     html = index.read_text(encoding="utf-8")
-    description = motto or "A newspaper for one reader: a front page, sections, an order, and an end."
+    description = og_description or motto or (
+        "A newspaper for one reader: a front page, sections, an order, and an end."
+    )
+    paper_title = og_title or paper_title
 
     html = html.replace("<title>The Vael Paper</title>", f"<title>{html_escape(paper_title)}</title>", 1)
     for key, attr in (("og:title", "property"), ("twitter:title", "name")):
@@ -71,7 +81,6 @@ def write_social_tags(out: Path, paper_title: str, motto: str,
     for key, attr in (("description", "name"), ("og:description", "property"),
                       ("twitter:description", "name")):
         html = _set_meta(html, key, attr, description)
-    html = _set_meta(html, "og:site_name", "property", paper_title)
 
     if social_card and social_card.is_file():
         shutil.copyfile(social_card, out / SOCIAL_CARD_NAME)
@@ -93,7 +102,8 @@ def write_social_tags(out: Path, paper_title: str, motto: str,
 
 
 def export(editions_root: Path, reader_dist: Path, out: Path,
-           base_url: str | None = None, social_card: Path | None = None) -> int:
+           base_url: str | None = None, social_card: Path | None = None,
+           og_title: str | None = None, og_description: str | None = None) -> int:
     """Write the site. Returns the number of editions exported."""
     if not reader_dist.is_dir() or not (reader_dist / "index.html").exists():
         raise SystemExit(
@@ -150,7 +160,8 @@ def export(editions_root: Path, reader_dist: Path, out: Path,
             motto = facts.get("motto") or ""
         except json.JSONDecodeError:
             log.warning("paper.json is not valid JSON; link-preview tags fall back to the masthead")
-    write_social_tags(out, paper_title, motto, base_url, social_card)
+    write_social_tags(out, paper_title, motto, base_url, social_card,
+                      og_title, og_description)
 
     # Without this, GitHub Pages runs Jekyll over the output, which drops
     # anything beginning with an underscore and slows the deploy for nothing.
@@ -178,10 +189,21 @@ def main(argv: list[str] | None = None) -> None:
         help=f"image to copy in as {SOCIAL_CARD_NAME} and use for og:image; "
              "1200x630 is the size every scraper agrees on",
     )
+    parser.add_argument(
+        "--og-title",
+        help="override the link-preview title; defaults to the masthead. Use it "
+             "on a public demo, where the masthead names the persona rather than "
+             "the project",
+    )
+    parser.add_argument(
+        "--og-description",
+        help="override the link-preview description; defaults to the motto",
+    )
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-    count = export(args.editions, args.reader, args.out, args.base_url, args.social_card)
+    count = export(args.editions, args.reader, args.out, args.base_url,
+                   args.social_card, args.og_title, args.og_description)
     print(f"exported {count} edition(s) to {args.out}", file=sys.stderr)
 
 

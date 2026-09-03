@@ -50,7 +50,9 @@ jobs:
           uv sync --locked
           uv run vael-paper-export --out ../site \
             --base-url https://vaelkeep.github.io/vael-paper/ \
-            --social-card ../docs/social-card.png
+            --social-card ../docs/social-card.png \
+            --og-title "The Vael Paper" \
+            --og-description "Your own daily newspaper, no bias, no ads: written overnight from your calendar, budget, feeds and notes, and printed like a real broadsheet."
 
       - name: The export is complete
         run: |
@@ -60,6 +62,7 @@ jobs:
           test -f site/.nojekyll
           test -f site/social-card.png
           grep -q 'og:image" content="https://vaelkeep.github.io/vael-paper/social-card.png"' site/index.html
+          grep -q '<title>The Vael Paper</title>' site/index.html
           ls site/editions/*/images/*.png >/dev/null
           echo "ok: $(find site -type f | wc -l) files"
 
