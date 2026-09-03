@@ -7,7 +7,15 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { baselineFor, chooseMode, columnsFor, computeGrid, quantise } from './geometry';
+import {
+  baselineFor,
+  chooseMode,
+  columnsFor,
+  computeGrid,
+  layoutKey,
+  quantise,
+  sameKey,
+} from './geometry';
 
 /** Roughly what a column of this width holds, for asserting on readability. */
 function chars(colW: number, fontSize: number): number {
@@ -89,6 +97,69 @@ describe('column count', () => {
         }
       }
     }
+  });
+});
+
+describe('magazine layout', () => {
+  it.each(DEVICES)('$name sets one column across the whole type block', ({ w, h }) => {
+    for (const scale of [0.85, 1, 1.32]) {
+      const grid = computeGrid({ w, h, layout: 'magazine' }, scale);
+      expect(grid.cols).toBe(1);
+      expect(grid.layout).toBe('magazine');
+      // The column is the type block: nothing is held back for a gutter.
+      const inner = grid.pageW - grid.margins.l - grid.margins.r;
+      expect(Math.abs(grid.colW - inner)).toBeLessThanOrEqual(4); // one quantum
+    }
+  });
+
+  it.each(DEVICES)('$name holds a readable measure at every text size', ({ w, h }) => {
+    // One column on a wide leaf must not mean one enormous line: the margins
+    // grow until the measure is back inside the band.
+    for (const scale of [0.85, 0.92, 1, 1.09, 1.2, 1.32]) {
+      const grid = computeGrid({ w, h, layout: 'magazine' }, scale);
+      const { fontSize } = baselineFor(scale);
+      const measure = chars(grid.colW, fontSize);
+      expect(measure).toBeGreaterThanOrEqual(34);
+      expect(measure).toBeLessThanOrEqual(68);
+    }
+  });
+
+  it('centres the column by widening both side margins equally', () => {
+    const paper = computeGrid({ w: 1512, h: 900 }, 1);
+    const magazine = computeGrid({ w: 1512, h: 900, layout: 'magazine' }, 1);
+    expect(paper.cols).toBe(2);
+    expect(magazine.mode).toBe(paper.mode);
+    expect(magazine.pageW).toBe(paper.pageW);
+    expect(magazine.pageH).toBe(paper.pageH);
+    expect(magazine.margins.t).toBe(paper.margins.t);
+    expect(magazine.margins.b).toBe(paper.margins.b);
+    expect(magazine.margins.l).toBe(magazine.margins.r);
+    expect(magazine.margins.l).toBeGreaterThan(paper.margins.l);
+  });
+
+  it('never has narrower margins than the broadsheet', () => {
+    for (const { w, h } of DEVICES) {
+      for (const scale of [0.85, 1, 1.32]) {
+        const paper = computeGrid({ w, h }, scale);
+        const magazine = computeGrid({ w, h, layout: 'magazine' }, scale);
+        expect(magazine.margins.l).toBeGreaterThanOrEqual(paper.margins.l);
+      }
+    }
+  });
+
+  it('is the default when no layout is asked for', () => {
+    expect(computeGrid({ w: 1512, h: 900 }, 1).layout).toBe('broadsheet');
+  });
+
+  it('is a different layout key even where the column rule already chose one', () => {
+    // A landscape iPad gets one column either way, so colW is identical. The
+    // key must still differ, because headlines are sized differently and the
+    // ledgers measured under one layout are wrong for the other.
+    const paper = computeGrid({ w: 1194, h: 834 }, 1);
+    const magazine = computeGrid({ w: 1194, h: 834, layout: 'magazine' }, 1);
+    expect(paper.cols).toBe(1);
+    expect(magazine.colW).toBe(paper.colW);
+    expect(sameKey(layoutKey(paper, 'v1'), layoutKey(magazine, 'v1'))).toBe(false);
   });
 });
 

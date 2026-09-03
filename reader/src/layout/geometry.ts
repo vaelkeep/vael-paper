@@ -9,7 +9,7 @@
  *     storm of remeasures.
  */
 
-import type { GridMetrics, LayoutKey, ReadingMode } from '../model/types';
+import type { GridMetrics, LayoutKey, ReadingLayout, ReadingMode } from '../model/types';
 
 /** Body size at scale 1. Everything else is a ratio of this. */
 const BASE_FONT_PX = 17;
@@ -29,6 +29,12 @@ const WIDTH_QUANTUM = 4;
 const IDEAL_COLUMN_CHARS = 56;
 const MIN_COLUMN_CHARS = 34;
 const MAX_COLUMN_CHARS = 68;
+/**
+ * The magazine's single column. A magazine line runs longer than a newspaper
+ * column's, so this sits in the upper half of the band; the side margins grow
+ * to hold it there, which is what gives a magazine page its generous margins.
+ */
+const MAGAZINE_COLUMN_CHARS = 64;
 
 /** Source Serif 4 averages close to this per character at text sizes. */
 const AVG_CHAR_EM = 0.49;
@@ -68,6 +74,8 @@ export interface ViewportInfo {
   h: number;
   /** True when the reader has explicitly chosen, so we skip the breakpoint. */
   modeOverride?: ReadingMode | null;
+  /** Columns by measure (the default), or one column across the page. */
+  layout?: ReadingLayout;
 }
 
 export function quantise(px: number): number {
@@ -151,6 +159,7 @@ export function columnsFor(
 
 export function computeGrid(view: ViewportInfo, fontScale: number): GridMetrics {
   const mode = chooseMode(view);
+  const layout = view.layout ?? 'broadsheet';
   const { fontSize, lineHeight } = baselineFor(fontScale);
 
   // In spread mode each leaf is half the surface; that changes colW, which is
@@ -163,12 +172,22 @@ export function computeGrid(view: ViewportInfo, fontScale: number): GridMetrics 
   const pageH = view.h;
 
   const margin = Math.round(lineHeight * (mode === 'scroll' ? 1 : 1.5));
-  const margins = { t: margin, r: margin, b: margin, l: margin };
+  // A magazine is the one layout that overrules the column rule. It sets one
+  // column, and holds that column to a readable measure by widening the side
+  // margins rather than by adding columns — so the type block is centred on
+  // the leaf, and on a wide leaf the margins are wide. Expressed in characters,
+  // so it scales with the text size: turn the type up and the margins close.
+  let side = margin;
+  if (layout === 'magazine' && mode !== 'scroll') {
+    const measure = Math.round(MAGAZINE_COLUMN_CHARS * AVG_CHAR_EM * fontSize);
+    side = Math.max(margin, Math.round((pageW - measure) / 2));
+  }
+  const margins = { t: margin, r: side, b: margin, l: side };
   const gutter = Math.round(lineHeight * 0.85);
   const ruleW = 1;
 
   const inner = pageW - margins.l - margins.r;
-  const cols = columnsFor(inner, fontSize, gutter, mode);
+  const cols = layout === 'magazine' ? 1 : columnsFor(inner, fontSize, gutter, mode);
   const colW = quantise((inner - gutter * (cols - 1)) / cols);
 
   const typeBlockH = pageH - margins.t - margins.b;
@@ -188,6 +207,7 @@ export function computeGrid(view: ViewportInfo, fontScale: number): GridMetrics 
     maxFigureLines,
     fontScale,
     mode,
+    layout,
   };
 }
 
@@ -202,6 +222,7 @@ export function layoutKey(
     pageH: grid.pageH,
     fontScale: grid.fontScale,
     mode: grid.mode,
+    layout: grid.layout,
     fontsVersion,
     templateSetId,
   };
@@ -215,6 +236,7 @@ export function sameKey(a: LayoutKey | null, b: LayoutKey | null): boolean {
     a.pageH === b.pageH &&
     a.fontScale === b.fontScale &&
     a.mode === b.mode &&
+    a.layout === b.layout &&
     a.fontsVersion === b.fontsVersion &&
     a.templateSetId === b.templateSetId
   );
@@ -232,6 +254,7 @@ export function onlyHeightChanged(next: LayoutKey, prev: LayoutKey | null): bool
     next.pageW === prev.pageW &&
     next.fontScale === prev.fontScale &&
     next.mode === prev.mode &&
+    next.layout === prev.layout &&
     next.fontsVersion === prev.fontsVersion
   );
 }

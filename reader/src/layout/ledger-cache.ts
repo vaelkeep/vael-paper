@@ -19,12 +19,13 @@ export function ledgerKeyOf(
     contentHash: article.hash,
     colW: grid.colW,
     fontScale: grid.fontScale,
+    layout: grid.layout,
     fontsVersion,
   };
 }
 
 export function keyString(key: LedgerKey): string {
-  return `${key.articleId}:${key.contentHash}:${key.colW}:${key.fontScale}:${key.fontsVersion}`;
+  return `${key.articleId}:${key.contentHash}:${key.colW}:${key.fontScale}:${key.layout}:${key.fontsVersion}`;
 }
 
 export class LedgerCache {
@@ -64,10 +65,14 @@ export class LedgerCache {
     return articles.filter((a) => !this.has(a, grid, fontsVersion));
   }
 
-  /** Drop everything measured at a width we have moved away from. */
-  evictExcept(colW: number, fontScale: number): void {
+  /** Drop everything measured at a width or layout we have moved away from. */
+  evictExcept(grid: GridMetrics): void {
     for (const [key, ledger] of this.store) {
-      if (ledger.key.colW !== colW || ledger.key.fontScale !== fontScale) {
+      if (
+        ledger.key.colW !== grid.colW ||
+        ledger.key.fontScale !== grid.fontScale ||
+        ledger.key.layout !== grid.layout
+      ) {
         this.store.delete(key);
       }
     }

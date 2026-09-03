@@ -101,6 +101,19 @@ turn the type up far enough and a column drops away on its own.
 `geometry.test.ts` pins this against those devices at every text size, including
 that the measure never leaves the band when some column count could satisfy it.
 
+The one thing that overrules the rule is the **magazine** layout, a reader
+setting. It fixes the count at one and answers a wide leaf by growing the
+**side margins** rather than the line: the column is held to about 64
+characters, in the upper half of the band because a magazine line runs longer
+than a newspaper column's, and the type block is centred on the leaf. Also
+expressed in characters, so turning the text up closes the margins. Everything
+else is unchanged: same page shape, same mode, same vertical margins, same
+packer. `layout` is part of the `LayoutKey` *and* the `LedgerKey`, because
+a magazine sets its interior headlines at the full-width size and a headline's
+height is something the ledger records; on a leaf where the column rule already
+chose one column, the two layouts share a `colW` and would otherwise share
+stale ledgers.
+
 ## Drop caps
 
 A three-line drop cap has two obligations, both about *ink*: its top aligns with

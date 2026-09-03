@@ -147,6 +147,7 @@ to `main` and is what serves the **Try it now** link above.
 | See the markdown | **Source** (top left, or `S`) — the files behind the page you are on, syntax-highlighted |
 | Earlier issues | **Archive** |
 | Paged ↔ scrolling | the mode button, which overrides the automatic choice |
+| Broadsheet ↔ magazine | the layout button: columns chosen by measure, or one column across the page |
 | Full screen | `⛶`, or press `f` |
 
 On an iPad, **Add to Home Screen** runs it full-screen with no browser chrome.
@@ -172,6 +173,13 @@ default, not a rule — the mode button overrides it in either direction.
 
 Rotating a tablet or changing the text size re-lays the whole edition and puts
 you back on the sentence you were reading.
+
+The column count above is the broadsheet layout. Press **Magazine** and every
+page is set in a single column, so plates and tables take the whole column and
+a story reads straight down rather than across. The column is held to a
+readable measure of about 64 characters by widening the side margins, which is
+what gives a magazine page its generous margins; turn the text up and they
+close. The choice is remembered per device.
 
 Links are canonical on the article, so they survive a change of device:
 

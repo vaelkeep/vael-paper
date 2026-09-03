@@ -12,7 +12,7 @@
  */
 
 import type { Edition } from '../content/manifest';
-import type { Cursor, GridMetrics, ImageAsset, LayoutKey } from '../model/types';
+import type { Cursor, GridMetrics, ImageAsset, LayoutKey, ReadingLayout } from '../model/types';
 import { LedgerCache } from './ledger-cache';
 import { measureBatch, measureFurniture } from './measure';
 import { planEdition, type EditionPlan } from './planner';
@@ -27,7 +27,8 @@ export type RelayoutReason =
   | 'orientation'
   | 'fontScale'
   | 'fontsSettled'
-  | 'mode';
+  | 'mode'
+  | 'layout';
 
 export interface PaginateResult {
   plan: EditionPlan;
@@ -69,10 +70,11 @@ export class Paginator {
     viewportH: number,
     fontScale: number,
     modeOverride: 'single' | 'spread' | 'scroll' | null,
+    layout: ReadingLayout = 'broadsheet',
   ): Promise<PaginateResult> {
     const started = performance.now();
     const grid = computeGrid(
-      { w: viewportW, h: viewportH, modeOverride },
+      { w: viewportW, h: viewportH, modeOverride, layout },
       fontScale,
     );
 
@@ -104,7 +106,7 @@ export class Paginator {
         measured = true;
       }
       // Ledgers measured at a width we have left will never be asked for again.
-      this.cache.evictExcept(grid.colW, grid.fontScale);
+      this.cache.evictExcept(grid);
     }
 
     // Furniture measured at band width rather than column width: the masthead,

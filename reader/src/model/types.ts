@@ -169,6 +169,8 @@ export interface LedgerKey {
   contentHash: string;
   colW: number;
   fontScale: number;
+  /** Headline sizes differ by layout, so a ledger is only valid for one. */
+  layout: ReadingLayout;
   fontsVersion: string;
 }
 
@@ -182,6 +184,12 @@ export interface LineLedger {
 // ---------------------------------------------------------------- geometry
 
 export type ReadingMode = 'single' | 'spread' | 'scroll';
+/**
+ * How the type block is divided. A broadsheet sets copy in columns chosen by
+ * measure; a magazine sets it in one column across the whole page, and lets
+ * every plate and table take the full width.
+ */
+export type ReadingLayout = 'broadsheet' | 'magazine';
 
 export interface GridMetrics {
   pageW: number;
@@ -197,6 +205,7 @@ export interface GridMetrics {
   maxFigureLines: number;
   fontScale: number;
   mode: ReadingMode;
+  layout: ReadingLayout;
 }
 
 export interface LayoutKey {
@@ -205,6 +214,7 @@ export interface LayoutKey {
   pageH: number;
   fontScale: number;
   mode: ReadingMode;
+  layout: ReadingLayout;
   fontsVersion: string;
   templateSetId: string;
 }

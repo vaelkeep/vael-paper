@@ -7,6 +7,7 @@
 
 import { FONT_SCALES } from '../layout/geometry';
 import { THEMES, type Settings, type Theme } from '../app/settings';
+import type { ReadingLayout } from '../model/types';
 import { fullscreenSupported, isFullscreen, toggleFullscreen, onFullscreenChange } from '../util/fullscreen';
 import { h } from '../util/dom';
 
@@ -16,12 +17,14 @@ export interface ToolbarActions {
   onContents(): void;
   onArchive(): void;
   onMode(): void;
+  onLayout(): void;
   onCover(): void;
 }
 
 export interface ToolbarHandle {
   setPage(index: number, count: number): void;
   setMode(label: string): void;
+  setLayout(layout: ReadingLayout): void;
   setCover(alone: boolean): void;
   reveal(): void;
   destroy(): void;
@@ -31,6 +34,11 @@ const THEME_LABEL: Record<Theme, string> = {
   day: 'Day',
   sepia: 'Sepia',
   night: 'Night',
+};
+
+const LAYOUT_LABEL: Record<ReadingLayout, string> = {
+  broadsheet: 'Broadsheet',
+  magazine: 'Magazine',
 };
 
 function button(label: string, title: string, onClick: () => void): HTMLButtonElement {
@@ -70,6 +78,11 @@ export function mountToolbar(
   const contents = button('Contents', 'Contents and sections', actions.onContents);
   const archive = button('Archive', 'Earlier editions', actions.onArchive);
   const mode = button('Paged', 'Switch between paged and scrolling', actions.onMode);
+  const layout = button(
+    LAYOUT_LABEL[settings.layout],
+    'Set the type in columns, or in one column across the page',
+    actions.onLayout,
+  );
 
   const cover = button('Cover', 'Show the front page alone, or paired', actions.onCover);
   cover.setAttribute('aria-pressed', String(settings.coverAlone));
@@ -103,6 +116,7 @@ export function mountToolbar(
     contents,
     archive,
     mode,
+    layout,
     cover,
   );
   if (full) bar.append(full);
@@ -131,8 +145,13 @@ export function mountToolbar(
     },
     setMode(label) {
       mode.textContent = label;
-      // Pairing only means anything in a spread.
+      // Pairing only means anything in a spread, and a scroll is already one
+      // column wide, so neither choice has anything to offer there.
       cover.hidden = label !== 'Paged';
+      layout.hidden = label !== 'Paged';
+    },
+    setLayout(current) {
+      layout.textContent = LAYOUT_LABEL[current];
     },
     setCover(alone) {
       cover.setAttribute('aria-pressed', String(alone));

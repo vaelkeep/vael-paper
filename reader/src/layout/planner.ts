@@ -23,7 +23,7 @@ import type {
   SectionId,
   SliceRef,
 } from '../model/types';
-import { cursorAt, packColumn } from './packer';
+import { JUMP_LINES, cursorAt, openingLines, packColumn } from './packer';
 
 /** Reserved at the foot of every page for the folio and its rule. */
 const FOLIO_LINES = 2;
@@ -240,11 +240,14 @@ export function planEdition(input: PlanInput): EditionPlan {
           sectionId !== undefined && !seenSections.has(sectionId) && pending.needsHead;
         const ruleLines = needsRule ? SECTION_RULE_LINES : 0;
 
-        // Head furniture is charged before any body lines, plus at least two
-        // lines of story, so a headline is never left stranded.
+        // Head furniture is charged before any body lines, plus the least the
+        // packer will accept of the story — a drop-cap paragraph comes whole,
+        // a plate comes whole — and the jump line the packer reserves in a
+        // final column, so a headline is never left stranded above nothing.
         if (pending.needsHead) {
           const head = headLines.get(pending.article.id) ?? 2;
-          if (ruleLines + head + 2 > capacity) break;
+          const reserve = isFinalColumn ? JUMP_LINES : 0;
+          if (ruleLines + head + openingLines(ledger) + reserve > capacity) break;
 
           if (needsRule && sectionId !== undefined) {
             seenSections.add(sectionId);

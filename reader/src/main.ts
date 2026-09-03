@@ -25,6 +25,7 @@ import type { Cursor, EditionSummary, ReadingMode } from './model/types';
 import { renderContinuous, type ContinuousHandle } from './scroll/continuous-view';
 import { renderPaged, type PagedHandle } from './render/paged-view';
 import {
+  applyLayout,
   applyTheme,
   fontScale,
   loadSettings,
@@ -64,6 +65,7 @@ class Reader {
 
   async start(): Promise<void> {
     applyTheme(this.settings.theme);
+    applyLayout(this.settings.layout);
     applyRhythm(fontScale(this.settings));
 
     const route = parseRoute();
@@ -168,6 +170,13 @@ class Reader {
       onContents: () => this.overlay?.showContents(),
       onArchive: () => void this.openArchive(),
       onMode: () => this.toggleMode(),
+      onLayout: () => {
+        this.settings.layout = this.settings.layout === 'magazine' ? 'broadsheet' : 'magazine';
+        saveSettings(this.settings);
+        applyLayout(this.settings.layout);
+        this.toolbar?.setLayout(this.settings.layout);
+        void this.relayout('layout');
+      },
       onCover: () => {
         this.settings.coverAlone = !this.settings.coverAlone;
         saveSettings(this.settings);
@@ -308,6 +317,7 @@ class Reader {
           window.innerHeight,
           scale,
           mode,
+          this.settings.layout,
         );
         this.plan = result.plan;
         this.paged = renderPaged(app, {
@@ -325,6 +335,7 @@ class Reader {
         });
         if (anchor) this.paged.goToAnchor(anchor);
         this.toolbar?.setMode('Paged');
+        this.toolbar?.setLayout(this.settings.layout);
         this.toolbar?.setCover(this.settings.coverAlone);
         this.toolbar?.setPage(this.paged.pageIndex(), result.plan.pages.length);
       }
@@ -333,7 +344,7 @@ class Reader {
         // eslint-disable-next-line no-console
         console.info(
           `[paginate] ${reason}: ${Math.round(performance.now() - started)}ms, ` +
-            `${this.plan?.pages.length ?? 0} pages, mode=${mode}`,
+            `${this.plan?.pages.length ?? 0} pages, mode=${mode}, layout=${this.settings.layout}`,
         );
         this.auditColumns();
         this.exposeForDebug(reason, anchor);
@@ -356,6 +367,7 @@ class Reader {
       pageIndex: () => this.paged?.pageIndex() ?? -1,
       pageCount: () => this.plan?.pages.length ?? 0,
       mode: this.currentMode(),
+      layout: this.settings.layout,
       plan: this.plan,
       layoutKey: this.paginator.layoutKey,
       setScale: (i: number) => {

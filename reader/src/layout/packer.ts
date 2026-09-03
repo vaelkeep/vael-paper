@@ -78,6 +78,33 @@ export function totalLines(ledger: LineLedger): number {
   return ledger.totalLines;
 }
 
+/**
+ * The fewest baselines `packColumn` will accept from the start of an article,
+ * before any jump reservation. The planner uses it to decide whether a headline
+ * can go in a column at all: a head with nothing under it is the one thing the
+ * packer cannot fix afterwards, because head furniture is not block space.
+ *
+ * A paragraph opens with `ORPHAN_MIN` lines unless it is too short to split,
+ * in which case it comes whole; an atomic block always comes whole; a table
+ * brings its label and heading plus `ORPHAN_MIN` rows. A block that keeps with
+ * the next also needs the next block's opening.
+ */
+export function openingLines(ledger: LineLedger): number {
+  const first = ledger.blocks[0];
+  if (!first) return 0;
+
+  const opening = (block: LineLedger['blocks'][number]): number => {
+    if (block.atomic) return block.lines;
+    const floor = block.head ? block.head.bodyStart + ORPHAN_MIN : ORPHAN_MIN;
+    return block.lines < floor + WIDOW_MIN ? block.lines : floor;
+  };
+
+  let lines = opening(first);
+  const next = ledger.blocks[1];
+  if (first.keepWithNext && next) lines += next.leadLines + opening(next);
+  return lines;
+}
+
 export function packColumn(
   capacityLines: number,
   start: Cursor,
@@ -160,25 +187,22 @@ export function packColumn(
     let take = Math.min(availableInBlock, Math.max(0, remaining - lead - entering));
     let rest = availableInBlock - take;
 
-    if (take > 0 && rest > 0 && take < ORPHAN_MIN) {
-      take = 0; // too few lines to strand at the foot
-      rest = availableInBlock;
-    }
-    // A table's label and heading with no rows beneath them is a heading
-    // stranded at the foot; the rows must come along or the table moves.
-    if (
-      block.head &&
-      cursor.lineIndex === 0 &&
-      take > 0 &&
-      rest > 0 &&
-      take < block.head.bodyStart + ORPHAN_MIN
-    ) {
-      take = 0;
-      rest = availableInBlock;
-    }
     if (take > 0 && rest > 0 && rest < WIDOW_MIN) {
       take -= WIDOW_MIN - rest; // pull lines back so the remainder is readable
       rest = availableInBlock - take;
+    }
+    // The orphan floor is applied *after* the widow pull-back, because the
+    // pull-back can itself leave too few lines at the foot: three lines into
+    // a two-line budget takes two, pulls one back, and would strand one.
+    //
+    // A table's floor is higher: its label and heading with no rows beneath
+    // them is a heading stranded at the foot, so the rows must come along or
+    // the table moves whole.
+    const floor =
+      block.head && cursor.lineIndex === 0 ? block.head.bodyStart + ORPHAN_MIN : ORPHAN_MIN;
+    if (take > 0 && rest > 0 && take < floor) {
+      take = 0; // too few lines to strand at the foot
+      rest = availableInBlock;
     }
 
     if (take <= 0) {

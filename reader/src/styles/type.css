@@ -113,6 +113,14 @@
   font-size: var(--fs-headline-sm);
 }
 
+/* In a magazine every story has the whole page, so a headline sized for a
+   single narrow column would sit small over a wide measure. Give them all the
+   full-width size; the lead keeps its own. */
+:root[data-layout='magazine'] .headline--1col,
+:root[data-layout='magazine'] .headline--2col {
+  font-size: var(--fs-headline);
+}
+
 .deck {
   font-family: var(--font-text);
   font-style: italic;

@@ -8,7 +8,16 @@
 
 import { describe, expect, it } from 'vitest';
 import type { BlockMetrics, LineLedger } from '../model/types';
-import { ORPHAN_MIN, WIDOW_MIN, atEnd, cursorAt, lastBlockOf, packColumn } from './packer';
+import {
+  JUMP_LINES,
+  ORPHAN_MIN,
+  WIDOW_MIN,
+  atEnd,
+  cursorAt,
+  lastBlockOf,
+  openingLines,
+  packColumn,
+} from './packer';
 
 type Spec = Partial<BlockMetrics> & { lines: number };
 
@@ -29,6 +38,7 @@ function ledger(specs: Spec[], articleId = 'a'): LineLedger {
       contentHash: 'h',
       colW: 300,
       fontScale: 1,
+      layout: 'broadsheet',
       fontsVersion: 'test',
     },
     lineHeight: 26,
@@ -389,5 +399,54 @@ describe('a table never opens a column with only its heading', () => {
     const led = ledger([{ lines: 5 }, { kind: 'table', lines: 10, head: { lines: 1, bodyStart: 2 } }]);
     const r = packColumn(10, cursorAt('a'), led);
     expect(r.cursor.lineIndex).toBe(4);
+  });
+});
+
+describe('openingLines', () => {
+  it('is the orphan minimum for a paragraph long enough to split', () => {
+    expect(openingLines(ledger([{ lines: 10 }]))).toBe(ORPHAN_MIN);
+  });
+
+  it('is the whole paragraph when it is too short to split', () => {
+    // A drop-cap paragraph is three lines: two at the foot would leave one
+    // widow, so the packer takes all three or nothing.
+    expect(openingLines(ledger([{ lines: 3 }]))).toBe(3);
+  });
+
+  it('is the whole block for a plate', () => {
+    expect(openingLines(ledger([{ lines: 8, atomic: true, kind: 'figure' }]))).toBe(8);
+  });
+
+  it('brings a table heading and its first rows together', () => {
+    const table = ledger([{ lines: 12, kind: 'table', head: { lines: 1, bodyStart: 2 } }]);
+    expect(openingLines(table)).toBe(2 + ORPHAN_MIN);
+  });
+
+  it('carries a keep-with-next block through to what follows it', () => {
+    const l = ledger([{ lines: 1, keepWithNext: true }, { lines: 10, leadLines: 1 }]);
+    expect(openingLines(l)).toBe(1 + 1 + ORPHAN_MIN);
+  });
+
+  it('is exactly what packColumn needs to place something in a final column', () => {
+    // The property the planner relies on: give the packer that many lines
+    // plus the jump reserve and it places something; one fewer and it does not.
+    for (const l of [
+      ledger([{ lines: 3 }, { lines: 9 }]),
+      ledger([{ lines: 10 }, { lines: 9 }]),
+      ledger([{ lines: 6, atomic: true, kind: 'figure' }, { lines: 9 }]),
+      ledger([{ lines: 12, kind: 'table', head: { lines: 1, bodyStart: 2 } }, { lines: 9 }]),
+    ]) {
+      const need = openingLines(l) + JUMP_LINES;
+      const enough = packColumn(need, cursorAt('a'), l, {
+        isPageFinalColumn: true,
+        columnIsEmpty: false,
+      });
+      const short = packColumn(need - 1, cursorAt('a'), l, {
+        isPageFinalColumn: true,
+        columnIsEmpty: false,
+      });
+      expect(enough.slice).not.toBeNull();
+      expect(short.slice).toBeNull();
+    }
   });
 });

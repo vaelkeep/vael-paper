@@ -3,7 +3,7 @@
  * leaves the browser.
  */
 
-import type { ReadingMode } from '../model/types';
+import type { ReadingLayout, ReadingMode } from '../model/types';
 import { DEFAULT_SCALE_INDEX, FONT_SCALES } from '../layout/geometry';
 
 export type Theme = 'day' | 'sepia' | 'night';
@@ -14,6 +14,12 @@ export interface Settings {
   theme: Theme;
   /** null = follow the breakpoint. Anything else is the reader overruling it. */
   mode: ReadingMode | null;
+  /**
+   * Columns chosen by measure, as a broadsheet, or one column across the whole
+   * page, as a magazine. The magazine trades a comfortable line length for
+   * plates and tables that take the full width.
+   */
+  layout: ReadingLayout;
   /**
    * Present the front page alone, like a folded paper on a doormat, rather
    * than paired with page two. It is the more faithful of the two and it
@@ -28,6 +34,7 @@ const DEFAULTS: Settings = {
   scaleIndex: DEFAULT_SCALE_INDEX,
   theme: 'day',
   mode: null,
+  layout: 'broadsheet',
   coverAlone: false,
 };
 
@@ -48,6 +55,7 @@ export function loadSettings(): Settings {
         parsed.mode === 'scroll' || parsed.mode === 'single' || parsed.mode === 'spread'
           ? parsed.mode
           : null,
+      layout: parsed.layout === 'magazine' ? 'magazine' : 'broadsheet',
       coverAlone: parsed.coverAlone === true,
     };
   } catch {
@@ -71,4 +79,13 @@ export function fontScale(settings: Settings): number {
 
 export function applyTheme(theme: Theme): void {
   document.documentElement.dataset.theme = theme;
+}
+
+/**
+ * Write the layout onto the document so the type system can see it. This must
+ * happen before anything is measured: a magazine sets its headlines larger,
+ * and a headline's size is part of what the ledger records.
+ */
+export function applyLayout(layout: ReadingLayout): void {
+  document.documentElement.dataset.layout = layout;
 }

@@ -123,6 +123,7 @@ export function readLedger(
       contentHash: article.hash,
       colW: ctx.grid.colW,
       fontScale: ctx.grid.fontScale,
+      layout: ctx.grid.layout,
       fontsVersion: ctx.fontsVersion,
     },
     lineHeight: lh,
