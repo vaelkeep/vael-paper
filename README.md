@@ -423,7 +423,7 @@ symptoms that look like something else entirely.
 
 [MIT](LICENSE) — do what you like with it, keep the copyright notice.
 
-© 2026 Rod Moore
+© 2026 vaelkeep
 
 The MIT licence covers this project's own code. The fonts bundled under
 `reader/src/fonts/` are third-party works redistributed under the SIL Open Font
@@ -442,6 +442,6 @@ License 1.1, which permits it — see [`NOTICE`](NOTICE).
 
 ## 👤 Author
 
-**Rod Moore** — [@rmoore2112](https://github.com/rmoore2112)
+**vaelkeep** — [@vaelkeep](https://github.com/vaelkeep)
 
 Project: [github.com/vaelkeep/vael-paper](https://github.com/vaelkeep/vael-paper)
